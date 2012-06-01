@@ -62,18 +62,12 @@
 
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>terracotta-repository</id>
-      <url>http://www.terracotta.org/download/reflector/releases
-      </url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>
