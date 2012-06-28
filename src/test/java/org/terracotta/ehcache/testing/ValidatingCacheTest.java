@@ -14,8 +14,8 @@ import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.driver.ParallelDriver;
-import org.terracotta.ehcache.testing.driver.SequentialDriver;
 import org.terracotta.ehcache.testing.driver.ParallelDriver.PooledException;
+import org.terracotta.ehcache.testing.driver.SequentialDriver;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
@@ -102,7 +102,7 @@ public class ValidatingCacheTest {
       return this;
     }
 
-    public void validate(int seed, Object value) {
+    public void validate(long seed, Object value) {
       throw new AssertionError();
     }
   }

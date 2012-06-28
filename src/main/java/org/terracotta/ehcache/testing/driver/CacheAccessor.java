@@ -61,7 +61,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
   public abstract CacheAccessor sequentially();
 
-  public abstract CacheAccessor sequentially(int offset);
+  public abstract CacheAccessor sequentially(long offset);
 
   /**
    * Sets weight for the current {@link IndividualCacheAccessor}<br>
@@ -74,7 +74,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
   public abstract CacheAccessor using(ObjectGenerator integers, ObjectGenerator fixedSize);
 
-  public abstract CacheAccessor atRandom(Distribution normal, int min, int max, int width);
+  public abstract CacheAccessor atRandom(Distribution normal, long min, long max, long width);
 
   /**
    * stop the test after specified time
@@ -208,7 +208,7 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor sequentially(int offset) {
+    public CacheAccessor sequentially(long offset) {
       if (sequenceGenerator == null) {
         sequenceGenerator = new SequentialSequenceGenerator(offset);
       } else {
@@ -218,7 +218,7 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor atRandom(Distribution distribution, int min, int max, int width) {
+    public CacheAccessor atRandom(Distribution distribution, long min, long max, long width) {
       if (sequenceGenerator == null) {
         sequenceGenerator = new RandomSequenceGenerator(distribution, min, max, width);
       } else {
@@ -234,7 +234,7 @@ public abstract class CacheAccessor implements CacheDriver {
      * @param seed
      * @param validator
      */
-    private void getOnce(int seed, Validator validator) {
+    private void getOnce(long seed, Validator validator) {
       Object key = keyGenerator.generate(seed);
       Object value = cacheWrapper.get(key);
       if (value == null) {
@@ -244,7 +244,7 @@ public abstract class CacheAccessor implements CacheDriver {
       }
     }
 
-    private void updateOnce(int seed) {
+    private void updateOnce(long seed) {
         Object key = keyGenerator.generate(seed);
     	cacheWrapper.put(key, valueGenerator.generate(seed));
     }
@@ -265,7 +265,7 @@ public abstract class CacheAccessor implements CacheDriver {
      * @param seed
      * @param validator
      */
-    public void runOnce(int seed, Validator validator){
+    public void runOnce(long seed, Validator validator){
 		try {
 		  TimeUnit.MICROSECONDS.sleep(delayInMicros.get());
 		} catch (InterruptedException e) {
@@ -408,7 +408,7 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor sequentially(final int offset) {
+    public CacheAccessor sequentially(final long offset) {
       for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
         try {
           it.next().sequentially(offset);
@@ -422,7 +422,7 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor atRandom(Distribution distribution, int min, int max, int width) {
+    public CacheAccessor atRandom(Distribution distribution, long min, long max, long width) {
       for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
         try {
           it.next().atRandom(distribution, min, max, width);

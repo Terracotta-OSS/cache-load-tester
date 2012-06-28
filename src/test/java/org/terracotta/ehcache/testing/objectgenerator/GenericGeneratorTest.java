@@ -1,17 +1,17 @@
 package org.terracotta.ehcache.testing.objectgenerator;
 
+import java.io.Serializable;
+
+import junit.framework.Assert;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
+
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
-
-import java.io.Serializable;
-
-import junit.framework.Assert;
 
 /**
  * @author Aurelien Broszniowski
@@ -29,15 +29,15 @@ public class GenericGeneratorTest {
       CacheDriver load = CacheLoader.load(cache)
           .using(StringGenerator.integers(),
               new ObjectGenerator() {
-                public Object generate(final int seed) {
+                public Object generate(final long seed) {
                   return new MyClass(seed, getName(seed), getEmail(seed));
                 }
 
-                private String getEmail(final int seed) {
+                private String getEmail(final long seed) {
                   return seed + "@" + "mail.com";
                 }
 
-                private String getName(final int seed) {
+                private String getName(final long seed) {
                   return "MyName " + seed;
                 }
               }
@@ -56,11 +56,11 @@ public class GenericGeneratorTest {
 
   public class MyClass implements Serializable {
 
-    private int id;
-    private String name;
-    private String email;
+    private final long id;
+    private final String name;
+    private final String email;
 
-    public MyClass(final int id, final String name, final String email) {
+    public MyClass(final long id, final String name, final String email) {
       this.id = id;
       this.name = name;
       this.email = email;

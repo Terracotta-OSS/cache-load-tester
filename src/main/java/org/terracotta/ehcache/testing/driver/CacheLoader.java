@@ -61,7 +61,7 @@ public class CacheLoader implements CacheDriver {
   }
 
   public CacheDriver partition(int count) {
-    int offset = 0;
+    long offset = 0;
     if (sequenceGenerator != null) {
       if (sequenceGenerator instanceof SequentialSequenceGenerator)
         offset = ((SequentialSequenceGenerator)sequenceGenerator).getOffset();
@@ -117,7 +117,7 @@ public class CacheLoader implements CacheDriver {
     return this;
   }
 
-  public CacheLoader iterate(int nbIterations) {
+  public CacheLoader iterate(long nbIterations) {
     if (terminationCondition == null) {
       terminationCondition = new IterationTerminationCondition(nbIterations);
     } else {
@@ -131,7 +131,7 @@ public class CacheLoader implements CacheDriver {
     return this.sequentially(0);
   }
 
-  public CacheLoader sequentially(int offset) {
+  public CacheLoader sequentially(long offset) {
     if (sequenceGenerator == null) {
       sequenceGenerator = new SequentialSequenceGenerator(offset);
     } else {
@@ -148,7 +148,7 @@ public class CacheLoader implements CacheDriver {
       reporter.startReporting();
     long start = System.currentTimeMillis();
     do {
-      int seed = seeds.next();
+      long seed = seeds.next();
       for (CacheWrapper cache : caches) {
         cache.put(keyGenerator.generate(seed), valueGenerator
             .generate(seed));
@@ -168,7 +168,7 @@ public class CacheLoader implements CacheDriver {
     return this;
   }
 
-  public CacheDriver fillPartitioned(int count, int threads) {
+  public CacheDriver fillPartitioned(long count, int threads) {
     return this.sequentially().iterate(count / threads).partition(threads);
   }
 

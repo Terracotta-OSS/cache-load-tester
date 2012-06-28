@@ -8,10 +8,10 @@ import java.util.Random;
 
 public class ByteArrayGenerator implements ObjectGenerator {
 
-  private Holding holding;
+  private final Holding holding;
   private final int min;
   private final int max;
-  private int depth;
+  private final int depth;
 
   private enum Holding {COLLECTION, GRAPH, NOTHING}
 
@@ -31,7 +31,7 @@ public class ByteArrayGenerator implements ObjectGenerator {
     this.depth = depth;
   }
 
-  public Object generate(int seed) {
+  public Object generate(long seed) {
     final Random random = new Random(seed);
 
     if (Holding.COLLECTION.equals(holding)) {

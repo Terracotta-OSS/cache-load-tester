@@ -4,18 +4,18 @@ import java.util.UUID;
 
 public class StringGenerator implements ObjectGenerator {
 
-  private Class clazz;
-  private int length;
+  private final Class clazz;
+  private final int length;
 
   private StringGenerator(final Class clazz, final int length) {
     this.clazz = clazz;
     this.length = length;
   }
 
-  public Object generate(int seed) {
+  public Object generate(long seed) {
     String st = null;
-    if (clazz == Integer.class) {
-      st = Integer.toString(seed);
+    if (clazz == Long.class) {
+      st = Long.toString(seed);
     } else if (clazz == Byte.class) {
       st = Byte.toString((byte)seed);
     }
@@ -37,7 +37,7 @@ public class StringGenerator implements ObjectGenerator {
    * Returns a Generator which will generate a String representing a number
    */
   public static ObjectGenerator integers() {
-    return new StringGenerator(Integer.class, 1);
+    return new StringGenerator(Long.class, 1);
   }
 
   /**

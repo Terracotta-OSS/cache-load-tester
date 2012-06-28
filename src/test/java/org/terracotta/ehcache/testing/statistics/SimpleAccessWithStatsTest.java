@@ -1,11 +1,14 @@
 package org.terracotta.ehcache.testing.statistics;
 
+import java.io.File;
+import java.util.concurrent.TimeUnit;
+
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-import sun.misc.Cache;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
@@ -17,9 +20,6 @@ import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
-
-import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Made by aurbrsz / 10/24/11 - 22:59
@@ -39,11 +39,11 @@ public class SimpleAccessWithStatsTest {
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.02)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
-        .logUsing(new CsvStatsLoggerImpl("logs-example.csv"));
+        .logUsing(new CsvStatsLoggerImpl("target/logs-example.csv"));
 
     ParallelDriver.inParallel(4, access).run();
 
-    long filesize = new File("logs-example.csv").length();
+    long filesize = new File("target/logs-example.csv").length();
     Assert.assertTrue("CSV file should not be empty", filesize > 0);
 
     manager.shutdown();

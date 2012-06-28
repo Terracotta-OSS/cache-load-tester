@@ -4,9 +4,9 @@ import org.terracotta.ehcache.testing.cache.CacheWrapper;
 
 public class IterationTerminationCondition implements TerminationCondition {
 
-  protected final int nbIterations;
+  protected final long nbIterations;
 
-  public IterationTerminationCondition(final int nbIterations) {
+  public IterationTerminationCondition(final long nbIterations) {
     this.nbIterations = nbIterations;
   }
 
@@ -16,7 +16,7 @@ public class IterationTerminationCondition implements TerminationCondition {
 
   class IteratedCondition implements Condition {
 
-    private int counter = 0;
+    private long counter = 0;
 
     public IteratedCondition(final CacheWrapper[] caches) {
       // no-op

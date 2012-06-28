@@ -12,7 +12,7 @@ public class FilledTerminationCondition implements TerminationCondition {
   }
 
   static class FilledCondition implements Condition {
-    private final Map<CacheWrapper, Integer> sizes = new IdentityHashMap<CacheWrapper, Integer>();
+    private final Map<CacheWrapper, Long> sizes = new IdentityHashMap<CacheWrapper, Long>();
 
     public FilledCondition(CacheWrapper[] caches) {
       for (CacheWrapper cache : caches) {
@@ -23,8 +23,8 @@ public class FilledTerminationCondition implements TerminationCondition {
     public synchronized boolean isMet() {
       boolean isMet = true;
 
-      for (Map.Entry<CacheWrapper, Integer> e : sizes.entrySet()) {
-        int current = e.getKey().getSize();
+      for (Map.Entry<CacheWrapper, Long> e : sizes.entrySet()) {
+        long current = e.getKey().getSize();
         if (current > e.getValue().intValue()) {
            isMet &= false;
            e.setValue(current);

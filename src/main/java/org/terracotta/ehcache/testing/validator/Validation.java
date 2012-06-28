@@ -8,6 +8,6 @@ public interface Validation {
 
   public interface Validator {
 
-    public void validate(int seed, Object value);
+    public void validate(long seed, Object value);
   }
 }

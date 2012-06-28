@@ -18,7 +18,7 @@ public class EqualityValidation implements Validation {
       this.valueGenerator = valueGenerator;
     }
 
-    public void validate(int seed, Object value) {
+    public void validate(long seed, Object value) {
       Object expected = valueGenerator.generate(seed);
       if (value.getClass().isArray() && expected.getClass().isArray()) {
         if (Array.getLength(expected) != Array.getLength(value)) {

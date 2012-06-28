@@ -2,6 +2,7 @@ package org.terracotta.ehcache.testing.cache;
 
 import net.sf.ehcache.store.MemoryStore;
 import net.sf.ehcache.store.disk.DiskStore;
+import net.sf.ehcache.store.offheap.OffHeapStore;
 
 import org.terracotta.ehcache.testing.statistics.Stats;
 
@@ -39,7 +40,7 @@ public interface CacheWrapper {
 	 * Get the size of the cache
 	 * @return cache size
 	 */
-	public Integer getSize();
+	public Long getSize();
 
 	/**
 	 * enables statistics collection

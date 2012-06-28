@@ -76,8 +76,9 @@ public class CacheWrapperImpl implements CacheWrapper {
 		return System.currentTimeMillis();
 	}
 
-	public Integer getSize() {
-		return cache.getSize();
+	public Long getSize() {
+		//TODO: check cache.getSize() to return long instead
+		return (long) cache.getSize();
 	}
 
 	public String getName() {

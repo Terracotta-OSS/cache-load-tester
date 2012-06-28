@@ -1,13 +1,13 @@
 package org.terracotta.ehcache.testing.sequencegenerator;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class PartitionedSequentialGenerator implements SequenceGenerator {
 
-  private final int start;
-  private final int stride;
+  private final long start;
+  private final long stride;
 
-  public PartitionedSequentialGenerator(int i, int count) {
+  public PartitionedSequentialGenerator(long i, long count) {
     this.start = i;
     this.stride = count;
   }
@@ -18,15 +18,15 @@ public class PartitionedSequentialGenerator implements SequenceGenerator {
 
   static class PartitionedSequence implements Sequence {
 
-    private final AtomicInteger next;
-    private final int stride;
+    private final AtomicLong next;
+    private final long stride;
 
-    public PartitionedSequence(int start, int stride) {
-      this.next = new AtomicInteger(start);
+    public PartitionedSequence(long start, long stride) {
+      this.next = new AtomicLong(start);
       this.stride = stride;
     }
 
-    public int next() {
+    public long next() {
       return next.getAndAdd(stride);
     }
   }

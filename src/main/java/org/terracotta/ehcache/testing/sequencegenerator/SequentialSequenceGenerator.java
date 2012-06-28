@@ -1,12 +1,12 @@
 package org.terracotta.ehcache.testing.sequencegenerator;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SequentialSequenceGenerator implements SequenceGenerator {
 
-  private final int offset;
+  private final long offset;
 
-  public SequentialSequenceGenerator(final int offset) {
+  public SequentialSequenceGenerator(final long offset) {
     this.offset = offset;
   }
 
@@ -14,19 +14,19 @@ public class SequentialSequenceGenerator implements SequenceGenerator {
     return new SequentialSequence(offset);
   }
 
-  public int getOffset() {
+  public long getOffset() {
 	return offset;
   }
 
   static class SequentialSequence implements Sequence {
 
-    private final AtomicInteger next;
+    private final AtomicLong next;
 
-    public SequentialSequence(final int offset) {
-      next = new AtomicInteger(offset);
+    public SequentialSequence(final long offset) {
+      next = new AtomicLong(offset);
     }
 
-    public int next() {
+    public long next() {
       return next.getAndIncrement();
     }
   }
