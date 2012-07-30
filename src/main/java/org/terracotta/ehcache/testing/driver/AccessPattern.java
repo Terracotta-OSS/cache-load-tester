@@ -80,12 +80,12 @@ public abstract class AccessPattern implements Runnable {
 	}
 
 	/**
-	 * introduces delay to all the accessors
+	 * add thinktime to all the accessors
 	 * @param nanos delay in nanoseconds
 	 */
-	protected void introduceDelay(long nanos){
+	protected void addThinkTime(long nanos){
 		for (IndividualCacheAccessor accessor : accessorsList){
-			accessor.introduceDelay(nanos);
+			accessor.addThinkTime(nanos);
 		}
 	}
 
@@ -122,7 +122,7 @@ public abstract class AccessPattern implements Runnable {
 				throw new IllegalStateException("Accessors can't be null!!");
 
 			IndividualCacheAccessor prev = null;
-			introduceDelay(DELAY_IN_MICROS);
+			addThinkTime(DELAY_IN_MICROS);
 			long stepWait = TimeUnit.MICROSECONDS.convert(duration, TimeUnit.SECONDS)/ GRADUAL_STEPS;
 			long stepDelay = DELAY_IN_MICROS / GRADUAL_STEPS;
 
@@ -143,14 +143,14 @@ public abstract class AccessPattern implements Runnable {
 					long start = System.currentTimeMillis();
 					for (int i = 0; i < GRADUAL_STEPS; i++){
 						if (prev != null){
-							prev.introduceDelay(increasing_delay);
+							prev.addThinkTime(increasing_delay);
 							increasing_delay += stepDelay;
 						}
-						accessor.introduceDelay(decreasing_delay);
+						accessor.addThinkTime(decreasing_delay);
 						decreasing_delay -= stepDelay;
 						try { TimeUnit.MICROSECONDS.sleep(stepWait);} catch (InterruptedException e) { return; }
 					}
-					accessor.introduceDelay(0);
+					accessor.addThinkTime(0);
 					prev = accessor;
 					long end = System.currentTimeMillis();
 					log.info("Finished in ..." + (end - start));
@@ -181,13 +181,13 @@ public abstract class AccessPattern implements Runnable {
 					} catch (InterruptedException e) {
 						return;
 					}
-					accessor.introduceDelay(DELAY_IN_MICROS);
+					accessor.addThinkTime(DELAY_IN_MICROS);
 					try {
 						TimeUnit.SECONDS.sleep(duration);
 					} catch (InterruptedException e) {
 						return;
 					}
-					introduceDelay(0);
+					addThinkTime(0);
 				}
 			}
 		}

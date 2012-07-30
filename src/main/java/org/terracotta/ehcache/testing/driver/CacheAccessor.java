@@ -36,7 +36,6 @@ import org.terracotta.ehcache.testing.validator.EqualityValidation;
 import org.terracotta.ehcache.testing.validator.Validation;
 import org.terracotta.ehcache.testing.validator.Validation.Validator;
 
-
 public abstract class CacheAccessor implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheAccessor.class);
   private final StatsReporter reporter = StatsReporter.getInstance();
@@ -53,15 +52,39 @@ public abstract class CacheAccessor implements CacheDriver {
     return accessor;
   }
 
+  /**
+   * Add ehcache to be accessed
+   * @param one Ehcache
+   * @return this
+   */
   public static CacheAccessor access(Ehcache one) {
     return new IndividualCacheAccessor(one);
   }
 
+  /**
+   * Add access to multiple caches
+   *
+   * @param one
+   * @return this
+   */
   public abstract CacheAccessor andAccess(Ehcache one);
 
+  /**
+   * Access the caches sequentially
+   *
+   * @return this
+   */
   public abstract CacheAccessor sequentially();
 
   public abstract CacheAccessor sequentially(long offset);
+
+  /**
+   * Add thinktime between each request
+   *
+   * @param micros thinktime in microseconds
+   * @return this
+   */
+  public abstract CacheAccessor addThinkTime(long micros);
 
   /**
    * Sets weight for the current {@link IndividualCacheAccessor}<br>
@@ -72,15 +95,23 @@ public abstract class CacheAccessor implements CacheDriver {
    */
   public abstract CacheAccessor withWeight(int i);
 
+  /**
+   * Add {@link ObjectGenerator} to be used while accessing.
+   *
+   * @param integers
+   * @param fixedSize
+   * @return this
+   */
   public abstract CacheAccessor using(ObjectGenerator integers, ObjectGenerator fixedSize);
 
   public abstract CacheAccessor atRandom(Distribution normal, long min, long max, long width);
 
   /**
    * stop the test after specified time
+   *
    * @param time
    * @param unit
-   * @return
+   * @return this
    */
   public abstract CacheAccessor stopAfter(int time, TimeUnit unit);
 
@@ -377,9 +408,11 @@ public abstract class CacheAccessor implements CacheDriver {
 		throw new IllegalStateException("AccessPattern is not allowed for IndividualCacheAccessor");
 	}
 
-	void introduceDelay(long millis) {
-		logger.debug("Delay set to : " + millis);
-		this.delayInMicros.set(millis);
+	@Override
+	public	CacheAccessor addThinkTime(long micros) {
+		logger.debug("Delay set to : " + micros);
+		this.delayInMicros.set(micros);
+		return this;
 	}
 
 }
@@ -590,6 +623,13 @@ public abstract class CacheAccessor implements CacheDriver {
 			int interval) {
 		accessPattern = AccessPattern.create(pattern).setDuration(
 					duration).setInterval(interval).setAccessors(accessors);
+		return this;
+	}
+
+	@Override
+	public CacheAccessor addThinkTime(long micros) {
+		for (IndividualCacheAccessor accessor : accessors)
+			accessor.addThinkTime(micros);
 		return this;
 	}
 
