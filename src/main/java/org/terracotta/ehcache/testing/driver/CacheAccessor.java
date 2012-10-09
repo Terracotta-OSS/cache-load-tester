@@ -161,6 +161,17 @@ public abstract class CacheAccessor implements CacheDriver {
    */
   public abstract CacheAccessor updateRatio(double updateRatio);
 
+  /**
+   * Sets remove ratio.
+   *
+   * 0.0 = No Removes
+   * 1.0 = 100% Removes
+   *
+   * @param removeRatio value between 0.0 - 1.0
+   * @return
+   */
+  public abstract CacheAccessor removeRatio(double removeRatio);
+
   protected abstract void execute();
 
   public void run() {
@@ -213,6 +224,7 @@ public abstract class CacheAccessor implements CacheDriver {
 	private final CacheWrapper cacheWrapper;
     private int weight = 1;
     private double updateRatio = 0.0;
+    private double removeRatio = 0.0;
     private final AtomicLong delayInMicros = new AtomicLong();
 
     private ObjectGenerator keyGenerator;
@@ -280,18 +292,35 @@ public abstract class CacheAccessor implements CacheDriver {
     	cacheWrapper.put(key, valueGenerator.generate(seed));
     }
 
-    /**
-     * If true, do an update operation
-     * If false, do a read operation
-     *
-     * @return boolean
-     */
-    private boolean shouldUpdate(){
-	  return (rnd.nextDouble() < updateRatio);
+    private void removeOnce(long seed) {
+        Object key = keyGenerator.generate(seed);
+    	cacheWrapper.remove(key);
     }
 
     /**
-     * executes read/write operation depending on {@link #shouldUpdate()}.
+     * Return next operation to execute depending on following <br/>
+     * If {@link Random#nextDouble()} falls in <br/>
+     * 0.0 - {@link #updateRatio} : {@link OPERATION#UPDATE} <br/>
+     * {@link #updateRatio} - {@link #removeRatio} : {@link OPERATION#REMOVE} <br/>
+     * {@link #removeRatio} - 1.0 : {@link OPERATION#GET} <br/>
+     * @return {@link OPERATION}
+     */
+    private OPERATION getNextOperation(){
+    	double d = rnd.nextDouble();
+    	if (d <= updateRatio)
+    		return OPERATION.UPDATE;
+    	else if (d > updateRatio && d <= (updateRatio + removeRatio))
+    		return OPERATION.REMOVE;
+    	else
+    		return OPERATION.GET;
+    }
+
+    enum OPERATION {
+    	GET, UPDATE, REMOVE;
+    }
+
+    /**
+     * executes read/write operation depending on {@link #getNextOperation()}.
      * It also adds a delay, if any, before doing operation.
      * @param seed
      * @param validator
@@ -302,10 +331,14 @@ public abstract class CacheAccessor implements CacheDriver {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-   	  if (shouldUpdate())
-    	updateOnce(seed);
-      else
-    	getOnce(seed, validator);
+   	  switch (getNextOperation()){
+   	  	case GET:
+   	  		getOnce(seed, validator);
+   	  	case UPDATE:
+   	  		updateOnce(seed);
+   	  	case REMOVE:
+   	  		removeOnce(seed);
+   	  }
     }
 
 	/**
@@ -392,6 +425,12 @@ public abstract class CacheAccessor implements CacheDriver {
 	@Override
 	public CacheAccessor updateRatio(double updateRatio) {
 		this.updateRatio = updateRatio;
+		return this;
+	}
+
+	@Override
+	public CacheAccessor removeRatio(double removeRatio) {
+		this.removeRatio = removeRatio;
 		return this;
 	}
 
@@ -607,6 +646,13 @@ public abstract class CacheAccessor implements CacheDriver {
 	public CacheAccessor updateRatio(double updateRatio) {
 	  for (IndividualCacheAccessor individualCacheAccessor : accessors)
 		individualCacheAccessor.updateRatio(updateRatio);
+	  return this;
+	}
+
+	@Override
+	public CacheAccessor removeRatio(double removeRatio) {
+	  for (IndividualCacheAccessor individualCacheAccessor : accessors)
+		individualCacheAccessor.removeRatio(removeRatio);
 	  return this;
 	}
 

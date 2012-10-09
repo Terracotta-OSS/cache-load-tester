@@ -128,4 +128,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 		}
 	}
 
+	public void remove(Object key) {
+		cache.remove(key);
+	}
+
 }

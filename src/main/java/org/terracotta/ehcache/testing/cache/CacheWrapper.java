@@ -30,6 +30,13 @@ public interface CacheWrapper {
 	public void put(Object key, Object value);
 
 	/**
+	 * Remove key from the cache
+	 *
+	 * @param key
+	 */
+	public void remove(Object key);
+
+	/**
 	 * Get the name of the underlying cache.
 	 *
 	 * @return name of the cache
@@ -84,4 +91,5 @@ public interface CacheWrapper {
 	 * @return
 	 */
 	public long getOnDiskSize();
+
 }
