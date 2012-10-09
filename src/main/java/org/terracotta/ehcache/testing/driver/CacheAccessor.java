@@ -334,10 +334,13 @@ public abstract class CacheAccessor implements CacheDriver {
    	  switch (getNextOperation()){
    	  	case GET:
    	  		getOnce(seed, validator);
+   	  		break;
    	  	case UPDATE:
    	  		updateOnce(seed);
+   	  		break;
    	  	case REMOVE:
    	  		removeOnce(seed);
+   	  		break;
    	  }
     }
 
