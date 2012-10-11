@@ -132,4 +132,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 		cache.remove(key);
 	}
 
+	public Ehcache getCache() {
+		return cache;
+	}
+
 }

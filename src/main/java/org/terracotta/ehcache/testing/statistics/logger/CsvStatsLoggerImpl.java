@@ -1,11 +1,5 @@
 package org.terracotta.ehcache.testing.statistics.logger;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import net.sf.ehcache.Ehcache;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
-import org.terracotta.ehcache.testing.statistics.Stats;
-import org.terracotta.ehcache.testing.statistics.StatsNode;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,6 +10,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.statistics.Stats;
+import org.terracotta.ehcache.testing.statistics.StatsNode;
+
+import au.com.bytecode.opencsv.CSVWriter;
 
 public class CsvStatsLoggerImpl implements StatsLogger {
 
@@ -59,10 +60,10 @@ public class CsvStatsLoggerImpl implements StatsLogger {
     logToCSV(statsList.toArray(new String[statsList.size()]));
   }
 
-  public void logMainHeader(final Map<Ehcache, CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Set<CacheWrapper> cacheWrapperMap, final String[] titles) {
     List<String> headers = new ArrayList<String>();
     headers.add("TimeStamp");
-    for (CacheWrapper cache : cacheWrapperMap.values()) {
+    for (CacheWrapper cache : cacheWrapperMap) {
       for (String title : titles)
         headers.add(cache.getName() + "_" + title);
     }

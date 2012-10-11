@@ -1,5 +1,6 @@
 package org.terracotta.ehcache.testing.cache;
 
+import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.store.MemoryStore;
 import net.sf.ehcache.store.disk.DiskStore;
 import net.sf.ehcache.store.offheap.OffHeapStore;
@@ -92,4 +93,9 @@ public interface CacheWrapper {
 	 */
 	public long getOnDiskSize();
 
+	/**
+	 * get the cache
+	 * @return
+	 */
+	public Ehcache getCache();
 }

@@ -1,13 +1,14 @@
 package org.terracotta.ehcache.testing.statistics;
 
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Status;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class MemoryStatsCollector implements Runnable {
@@ -17,16 +18,16 @@ public class MemoryStatsCollector implements Runnable {
   // Fields values to change
   private static final int reportPeriod = Integer.parseInt(System.getProperty("stats.reporter.interval","4"));
 
-  private          long                       waitingInterval = TimeUnit.SECONDS.toMillis(reportPeriod * 2);
+  private final long waitingInterval = TimeUnit.SECONDS.toMillis(reportPeriod * 2);
 
-  public  volatile boolean                    running         = true;
-  private          Map<Ehcache, CacheWrapper> cacheWrapperMap;
+  public  volatile boolean running         = true;
+  private  Set<CacheWrapper> cacheWrapperMap;
 
-  public MemoryStatsCollector(final Map<Ehcache, CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector(final Set<CacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
   }
 
-  public MemoryStatsCollector cacheWrappers(Map<Ehcache, CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector cacheWrappers(Set<CacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
     return this;
   }
@@ -35,9 +36,9 @@ public class MemoryStatsCollector implements Runnable {
     try {
       while (running) {
         logger.info("----------- Memory -----------");
-        for (Ehcache cache : cacheWrapperMap.keySet()) {
+        for (CacheWrapper cacheWrapper : cacheWrapperMap) {
+          Ehcache cache = cacheWrapper.getCache();
           if (Status.STATUS_ALIVE.equals(cache.getStatus())) {
-            CacheWrapper cacheWrapper = cacheWrapperMap.get(cache);
             logger.info("Cache name = {} \t\t OnHeap={}Kb \t\t OffHeap={}Kb \t\t OnDisk={}Kb", new Object[] {
                 cacheWrapper.getName(),
                 cacheWrapper.getOnHeapSize(),

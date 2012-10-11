@@ -2,8 +2,7 @@ package org.terracotta.ehcache.testing.statistics.logger;
 
 import java.text.NumberFormat;
 import java.util.Map;
-
-import net.sf.ehcache.Ehcache;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +122,7 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
 	5000-PLUS frequency count = 0 percentage = 0.0
 	    */
 
-  public void logMainHeader(final Map<Ehcache, CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Set<CacheWrapper> cacheWrapperMap, final String[] titles) {
     logger.info("---------------------------- starting to log performances ----------------------------");
   }
 }

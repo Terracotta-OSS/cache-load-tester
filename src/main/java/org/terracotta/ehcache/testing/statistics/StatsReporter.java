@@ -4,9 +4,7 @@
  */
 package org.terracotta.ehcache.testing.statistics;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +21,7 @@ public class StatsReporter {
   private static Logger logger = LoggerFactory.getLogger(StatsReporter.class);
   private static final int reportPeriod = Integer.parseInt(System.getProperty("stats.reporter.interval","4"));
 
-  private final Map<Ehcache, CacheWrapper> cacheWrapperMap = new HashMap<Ehcache, CacheWrapper>();
+  private final Set<CacheWrapper> cacheWrappers = new HashSet<CacheWrapper>();
 
   private final AtomicReference<Thread> reportThread = new AtomicReference<Thread>();
   private final AtomicReference<Thread> memoryReportThread = new AtomicReference<Thread>();
@@ -116,7 +114,7 @@ public class StatsReporter {
     };
     reportThread.set(t);
 
-    Thread m = new Thread(new MemoryStatsCollector(cacheWrapperMap));
+    Thread m = new Thread(new MemoryStatsCollector(cacheWrappers));
     memoryReportThread.set(m);
 
     t.start();
@@ -158,7 +156,7 @@ public class StatsReporter {
 
   public synchronized void register(Ehcache cache, CacheWrapper cacheWrapper) {
     logger.debug(cache.getName() + " registered for stats reporting.");
-    cacheWrapperMap.put(cache, cacheWrapper);
+    cacheWrappers.add(cacheWrapper);
   }
 
   public StatsNode getFinalStats() {
@@ -175,14 +173,14 @@ public class StatsReporter {
    */
   private void resetStats() {
 	node.reset();
-    for (CacheWrapper cache : cacheWrapperMap.values()) {
+    for (CacheWrapper cache : cacheWrappers) {
       cache.resetStats();
     }
   }
 
   private void logMainHeader() {
     for (StatsLogger statsLogger : statsLoggers) {
-      statsLogger.logMainHeader(cacheWrapperMap, StatsElement.names());
+      statsLogger.logMainHeader(cacheWrappers, StatsElement.names());
     }
   }
 
@@ -190,7 +188,7 @@ public class StatsReporter {
    * Logs periodic stats to the list of {@link StatsLogger}.
    */
   private void doReport() {
-    for (CacheWrapper cache : cacheWrapperMap.values()) {
+    for (CacheWrapper cache : cacheWrappers) {
       node.addReadStats(cache.getName(), cache.getReadStats().getPeriodStats());
       node.addWriteStats(cache.getName(), cache.getWriteStats().getPeriodStats());
     }
