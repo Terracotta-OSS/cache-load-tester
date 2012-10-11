@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.sf.ehcache.Ehcache;
@@ -28,6 +29,7 @@ public class StatsReporter {
   private final AtomicReference<Thread> memoryReportThread = new AtomicReference<Thread>();
   private final Set<StatsLogger> statsLoggers = new HashSet<StatsLogger>();
   private final StatsNode node = new StatsNode();
+  private final AtomicInteger curr = new AtomicInteger();
 
   private enum StatsElement {
 
@@ -90,6 +92,7 @@ public class StatsReporter {
    * @return this
    */
   public synchronized StatsReporter startReporting() {
+	logger.debug("Starting stats reporting ... thread #" + curr.incrementAndGet());
     if (reportThread.get() != null) {
       return this;
     }
@@ -126,6 +129,11 @@ public class StatsReporter {
    * new {@link CacheWrapper} is created for each driver
    */
   public synchronized void stopReporting() {
+	int last = curr.decrementAndGet();
+	logger.debug("Trying to stop stats reporting ... thread #" + last);
+	if (last != 0)
+		return;
+
     Thread t = reportThread.get();
     if (t == null)
       return;
