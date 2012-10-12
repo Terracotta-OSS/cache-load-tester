@@ -1,9 +1,10 @@
 package org.terracotta.ehcache.testing.statistics;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Status;
 
 import org.slf4j.Logger;
@@ -36,9 +37,14 @@ public class MemoryStatsCollector implements Runnable {
     try {
       while (running) {
         logger.info("----------- Memory -----------");
-        for (CacheWrapper cacheWrapper : cacheWrapperMap) {
-          Ehcache cache = cacheWrapper.getCache();
-          if (Status.STATUS_ALIVE.equals(cache.getStatus())) {
+
+        // Get non-duplicate set of the ehcaches
+        Map<String, CacheWrapper> caches = new HashMap<String, CacheWrapper>();
+        for (CacheWrapper cacheWrapper : cacheWrapperMap)
+            caches.put(cacheWrapper.getCache().getName(), cacheWrapper);
+
+        for (CacheWrapper cacheWrapper: caches.values()) {
+          if (Status.STATUS_ALIVE.equals(cacheWrapper.getCache().getStatus())) {
             logger.info("Cache name = {} \t\t OnHeap={}Kb \t\t OffHeap={}Kb \t\t OnDisk={}Kb", new Object[] {
                 cacheWrapper.getName(),
                 cacheWrapper.getOnHeapSize(),
