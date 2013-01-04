@@ -4,7 +4,9 @@
  */
 package org.terracotta.ehcache.testing.statistics;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,19 +17,21 @@ import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
+import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
 import org.terracotta.ehcache.testing.statistics.logger.StatsLogger;
 
 public class StatsReporter {
   private static Logger logger = LoggerFactory.getLogger(StatsReporter.class);
   private static final int reportPeriod = Integer.parseInt(System.getProperty("stats.reporter.interval","4"));
 
-  private final Set<CacheWrapper> cacheWrappers = new HashSet<CacheWrapper>();
+  private final Map<String, CacheWrapper> cacheWrappers = new HashMap<String, CacheWrapper>();
 
   private final AtomicReference<Thread> reportThread = new AtomicReference<Thread>();
   private final AtomicReference<Thread> memoryReportThread = new AtomicReference<Thread>();
   private final Set<StatsLogger> statsLoggers = new HashSet<StatsLogger>();
-  private final StatsNode node = new StatsNode();
   private final AtomicInteger curr = new AtomicInteger();
+  private final StatsNode node = new StatsNode();
 
   private enum StatsElement {
 
@@ -59,11 +63,11 @@ public class StatsReporter {
 
   /**
    * Add a logger for stats.
-   * In older versions, we had a console logger included and an option Csv logger @CsvStatsLoggerImpl implementing @StatsLogger
-   * Now we can choose what kind of logger we want, @CsvStatsLoggerImpl or @ConsoleStatsLoggerImpl, or even both and
-   * we can add as many logger we see fit. Use then @addLogger(StatsLogger logger) to add one or multiple loggers
+   * In older versions, we had a console logger included and an option Csv logger {@link CsvStatsLoggerImpl} implementing @StatsLogger
+   * Now we can choose what kind of logger we want, {@link CsvStatsLoggerImpl} or {@link ConsoleStatsLoggerImpl}, or even both and
+   * we can add as many logger we see fit. Use then {@link #addLogger(StatsLogger)} to add one or multiple loggers
    *
-   * @param loggers array of Stats Logger implementing @StatsLogger
+   * @param loggers array of Stats Logger implementing {@link StatsLogger}
    * @return StatsReporter
    */
   public synchronized StatsReporter logUsing(StatsLogger... loggers) {
@@ -98,14 +102,14 @@ public class StatsReporter {
     Thread t = new Thread() {
       @Override
       public void run() {
-
         logMainHeader();
         resetStats();
         while (true) {
           try {
             TimeUnit.SECONDS.sleep(reportPeriod);
           } catch (InterruptedException e) {
-//						e.printStackTrace();
+//			e.printStackTrace();
+        	logger.debug("StatsReporter interuppted.");
             return;
           }
           doReport();
@@ -114,7 +118,7 @@ public class StatsReporter {
     };
     reportThread.set(t);
 
-    Thread m = new Thread(new MemoryStatsCollector(cacheWrappers));
+    Thread m = new Thread(new MemoryStatsCollector(cacheWrappers.values()));
     memoryReportThread.set(m);
 
     t.start();
@@ -136,8 +140,6 @@ public class StatsReporter {
     if (t == null)
       return;
     try {
-      // TODO : Add finalise on MemoryReportThread
-      finalise();
       Thread m = memoryReportThread.get();
       if (m != null) {
         m.interrupt();
@@ -145,7 +147,7 @@ public class StatsReporter {
       }
       t.interrupt();
       t.join();
-
+      finalise();
       doReport();
     } catch (InterruptedException e) {
 //			e.printStackTrace();
@@ -155,8 +157,11 @@ public class StatsReporter {
   }
 
   public synchronized void register(Ehcache cache, CacheWrapper cacheWrapper) {
-    logger.debug(cache.getName() + " registered for stats reporting.");
-    cacheWrappers.add(cacheWrapper);
+    String name = cacheWrapper.getName();
+    logger.info(name + " registered for stats reporting.");
+    cacheWrappers.put(name, cacheWrapper);
+    node.addReadStats(name, cacheWrapper.getReadStats());
+    node.addWriteStats(name, cacheWrapper.getWriteStats());
   }
 
   public StatsNode getFinalStats() {
@@ -171,16 +176,16 @@ public class StatsReporter {
   /**
    * Reset stats for all {@link CacheWrapper}
    */
-  private void resetStats() {
+  private synchronized void resetStats() {
 	node.reset();
-    for (CacheWrapper cache : cacheWrappers) {
+    for (CacheWrapper cache : cacheWrappers.values()) {
       cache.resetStats();
     }
   }
 
   private void logMainHeader() {
     for (StatsLogger statsLogger : statsLoggers) {
-      statsLogger.logMainHeader(cacheWrappers, StatsElement.names());
+      statsLogger.logMainHeader(cacheWrappers.values(), StatsElement.names());
     }
   }
 
@@ -188,16 +193,10 @@ public class StatsReporter {
    * Logs periodic stats to the list of {@link StatsLogger}.
    */
   private void doReport() {
-    for (CacheWrapper cache : cacheWrappers) {
-      node.addReadStats(cache.getName(), cache.getReadStats().getPeriodStats());
-      node.addWriteStats(cache.getName(), cache.getWriteStats().getPeriodStats());
-    }
-
     if (statsLoggers.size() == 0) {
       logger.warn("You didn't set any StatsLogger to log the stats. You can set one or more using: logUsing(StatsLogger... loggers)");
     }
-    for (StatsLogger statsLogger : statsLoggers) {
+    for (StatsLogger statsLogger : statsLoggers)
       statsLogger.log(node);
-    }
   }
 }

@@ -8,61 +8,38 @@ import java.util.Map;
  */
 public class StatsNode {
 
-  private Map<String, Stats> currentReadStatsList = new LinkedHashMap<String, Stats>();
-  private Map<String, Stats> currentWriteStatsList = new LinkedHashMap<String, Stats>();
+  private final Map<String, Stats> readStatsList = new LinkedHashMap<String, Stats>();
+  private final Map<String, Stats> writeStatsList = new LinkedHashMap<String, Stats>();
 
-  private Map<String, Stats> currentCumulativeReadStatsList = new LinkedHashMap<String, Stats>();
-  private Map<String, Stats> currentCumulativeWriteStatsList = new LinkedHashMap<String, Stats>();
-
-  private Stats overallStats = new Stats();
+  private Stats overallStats;
 
   public void addReadStats(final String name, final Stats read) {
-    currentReadStatsList.put(name, read);
-    if (currentCumulativeReadStatsList.get(name) == null) {
-      currentCumulativeReadStatsList.put(name, read);
-    } else {
-      currentCumulativeReadStatsList.get(name).add(read);
-    }
-
-    overallStats.add(read);
+	readStatsList.put(name, read);
   }
 
   public void addWriteStats(final String name, final Stats write) {
-    currentWriteStatsList.put(name, write);
-    if (currentCumulativeWriteStatsList.get(name) == null) {
-      currentCumulativeWriteStatsList.put(name, write);
-    } else {
-      currentCumulativeWriteStatsList.get(name).add(write);
-    }
-
-    overallStats.add(write);
+	writeStatsList.put(name, write);
   }
 
-  public void reset() {
-    currentReadStatsList = new LinkedHashMap<String, Stats>();
-    currentWriteStatsList = new LinkedHashMap<String, Stats>();
-    currentCumulativeReadStatsList = new LinkedHashMap<String, Stats>();
-    currentCumulativeWriteStatsList = new LinkedHashMap<String, Stats>();
+  public synchronized void reset() {
+    for (Stats s : readStatsList.values())
+        s.reset();
+    for (Stats s : writeStatsList.values())
+        s.reset();
     overallStats = new Stats();
   }
 
   public Map<String, Stats> getReadStatsList() {
-    return currentReadStatsList;
+    return readStatsList;
   }
 
   public Map<String, Stats> getWriteStatsList() {
-    return currentWriteStatsList;
-  }
-
-  public Map<String, Stats> getCumulativeReadStatsList() {
-    return currentCumulativeReadStatsList;
-  }
-
-  public Map<String, Stats> getCumulativeWriteStatsList() {
-    return currentCumulativeWriteStatsList;
+    return writeStatsList;
   }
 
   public Stats getOverallStats() {
+	  if (overallStats == null)
+		  throw new IllegalStateException("StatsNode needs to be finalized!");
     return overallStats;
   }
 
@@ -73,14 +50,14 @@ public class StatsNode {
 
   public Stats getOverallReadStats(){
 	  Stats overall = new Stats();
-	  for (Stats read: getCumulativeReadStatsList().values())
+	  for (Stats read: getReadStatsList().values())
 		  overall.add(read);
 	  return overall;
   }
 
   public Stats getOverallWriteStats(){
 	  Stats overall = new Stats();
-	  for (Stats write: getCumulativeWriteStatsList().values())
+	  for (Stats write: getWriteStatsList().values())
 		  overall.add(write);
 	  return overall;
   }
@@ -91,14 +68,15 @@ public class StatsNode {
   }
 
   public void finalise(){
-	  for (Stats stat: getReadStatsList().values())
+	  overallStats = new Stats();
+	  for (Stats stat: getReadStatsList().values()){
 		  stat.finalise();
-	  for (Stats stat: getWriteStatsList().values())
+		  overallStats.add(stat);
+	  }
+	  for (Stats stat: getWriteStatsList().values()){
 		  stat.finalise();
-	  for (Stats stat: getCumulativeReadStatsList().values())
-		  stat.finalise();
-	  for (Stats stat: getCumulativeWriteStatsList().values())
-		  stat.finalise();
+		  overallStats.add(stat);
+	  }
 	  overallStats.finalise();
   }
 

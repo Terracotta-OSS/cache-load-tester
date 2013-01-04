@@ -7,6 +7,7 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
@@ -19,6 +20,7 @@ import org.terracotta.ehcache.testing.termination.IterationTerminationCondition;
 
 public class ParallelDriverStatsTest {
 	@Test
+	@Ignore("recheck this test")
 	public void testMultiCacheSequentialLoading() {
 		CacheManager manager = new CacheManager(new Configuration()
 				.name("testMultiCacheSequentialLoading")
@@ -37,6 +39,7 @@ public class ParallelDriverStatsTest {
 				.enableStatistics(true).sequentially().iterate(size)
 				.logUsing(new ConsoleStatsLoggerImpl());
 		loader.run();
+		loader.getFinalStats();
 		Assert.assertEquals(size, cache1.getSize());
 		Assert.assertEquals(size, cache2.getSize());
 
@@ -64,6 +67,7 @@ public class ParallelDriverStatsTest {
 	}
 
 	@Test
+	@Ignore("recheck this test")
 	public void testSequentialLoading() {
 		CacheManager manager = new CacheManager(new Configuration()
 				.name("testSequentialLoading")

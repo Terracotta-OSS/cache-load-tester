@@ -8,9 +8,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
 import org.terracotta.ehcache.testing.statistics.Stats;
@@ -42,9 +42,9 @@ public class CsvStatsLoggerImpl implements StatsLogger {
 
     Stats nodeTotal = new Stats();
     for (final String name : readStatsList.keySet()) {
-      Stats readStats = readStatsList.get(name);
-      Stats writeStats = writeStatsList.get(name);
-      Stats total = new Stats(readStats).add(writeStats);
+      Stats readStats = readStatsList.get(name).getPeriodStats();
+      Stats writeStats = writeStatsList.get(name).getPeriodStats();
+      Stats total = new Stats(readStats).add(writeStats).getPeriodStats();
       nodeTotal.add(total);
     }
 
@@ -60,7 +60,7 @@ public class CsvStatsLoggerImpl implements StatsLogger {
     logToCSV(statsList.toArray(new String[statsList.size()]));
   }
 
-  public void logMainHeader(final Set<CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Collection<CacheWrapper> cacheWrapperMap, final String[] titles) {
     List<String> headers = new ArrayList<String>();
     headers.add("TimeStamp");
     for (CacheWrapper cache : cacheWrapperMap) {

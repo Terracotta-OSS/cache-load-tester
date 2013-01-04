@@ -1,8 +1,8 @@
 package org.terracotta.ehcache.testing.statistics.logger;
 
 import java.text.NumberFormat;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,11 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
   private static final NumberFormat nf = NumberFormat.getInstance();
 
   private enum StatsCategory {
-    READS, WRITES, TOTAL, NODE
+    READS, WRITES, TOTAL
+  }
+
+  private enum StatsType {
+	  PERIOD, CUMULATIVE
   }
 
   private void header(final String title, final String... headers) {
@@ -44,21 +48,16 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
   }
 
   public void log(final StatsNode node) {
-    Map<String, Stats> readStatsList;
-    Map<String, Stats> writeStatsList;
+    Map<String, Stats> readStatsList = node.getReadStatsList();
+    Map<String, Stats> writeStatsList = node.getWriteStatsList();
 
-    readStatsList = node.getReadStatsList();
-    writeStatsList = node.getWriteStatsList();
-    logNodeStats("Period Stats", readStatsList, writeStatsList);
-
-    readStatsList = node.getCumulativeReadStatsList();
-    writeStatsList = node.getCumulativeWriteStatsList();
-    logNodeStats("Cumulative Stats", readStatsList, writeStatsList);
+    logNodeStats(StatsType.PERIOD, readStatsList, writeStatsList);
+    logNodeStats(StatsType.CUMULATIVE, readStatsList, writeStatsList);
   }
 
- private void logNodeStats(String title, final Map<String, Stats> readStatsList,
+ private void logNodeStats(StatsType type, final Map<String, Stats> readStatsList,
                            final Map<String, Stats> writeStatsList) {
-    header(title);
+    header(type.toString());
     Stats nodeTotal = new Stats();
     Stats readTotal = new Stats();
     Stats writeTotal = new Stats();
@@ -67,20 +66,27 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
     if (readStatsList.keySet().size() > detailedMax){
     	isDetailed = false;
     }
-    for (final String name : readStatsList.keySet()) {
 
-      Stats readStats = readStatsList.get(name);
-      Stats writeStats = writeStatsList.get(name);
-      Stats total = new Stats(readStats).add(writeStats);
-      if (isDetailed){
-    	logStats(readStats, name, StatsCategory.READS);
-      	logStats(writeStats, name, StatsCategory.WRITES);
-      	logStats(total, name, StatsCategory.TOTAL);
-      	logger.info("");
-      }
-      readTotal.add(readStats);
-      writeTotal.add(writeStats);
-      nodeTotal.add(total);
+    for (final String name : readStatsList.keySet()) {
+            Stats readStats, writeStats, total;
+            if (StatsType.PERIOD.equals(type)) {
+                readStats = readStatsList.get(name).getPeriodStats();
+                writeStats = writeStatsList.get(name).getPeriodStats();
+            } else {
+                readStats = readStatsList.get(name);
+                writeStats = writeStatsList.get(name);
+            }
+
+            total = new Stats(readStats).add(writeStats);
+            if (isDetailed) {
+                logStats(readStats, name, StatsCategory.READS);
+                logStats(writeStats, name, StatsCategory.WRITES);
+                logStats(total, name, StatsCategory.TOTAL);
+                logger.info("");
+            }
+            readTotal.add(readStats);
+            writeTotal.add(writeStats);
+            nodeTotal.add(total);
     }
     logStats(readTotal, "All Caches", StatsCategory.READS);
     logStats(writeTotal, "All Caches", StatsCategory.WRITES);
@@ -122,7 +128,7 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
 	5000-PLUS frequency count = 0 percentage = 0.0
 	    */
 
-  public void logMainHeader(final Set<CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Collection<CacheWrapper> cacheWrapperMap, final String[] titles) {
     logger.info("---------------------------- starting to log performances ----------------------------");
   }
 }

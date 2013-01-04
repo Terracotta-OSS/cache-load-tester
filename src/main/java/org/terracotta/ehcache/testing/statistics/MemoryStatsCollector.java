@@ -1,8 +1,8 @@
 package org.terracotta.ehcache.testing.statistics;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import net.sf.ehcache.Status;
@@ -22,13 +22,13 @@ public class MemoryStatsCollector implements Runnable {
   private final long waitingInterval = TimeUnit.SECONDS.toMillis(reportPeriod * 2);
 
   public  volatile boolean running         = true;
-  private  Set<CacheWrapper> cacheWrapperMap;
+  private  Collection<CacheWrapper> cacheWrapperMap;
 
-  public MemoryStatsCollector(final Set<CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector(final Collection<CacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
   }
 
-  public MemoryStatsCollector cacheWrappers(Set<CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector cacheWrappers(Collection<CacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
     return this;
   }

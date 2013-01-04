@@ -4,15 +4,11 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsReporter;
 
 public class CacheWrapperImpl implements CacheWrapper {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(CacheWrapperImpl.class);
 	private static final int KB = 1024;
 	private final Stats readStats, writeStats;
 
@@ -101,6 +97,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 	public long getOffHeapSize() {
 		try {
 			return cache.calculateOffHeapSize() / KB;
+        } catch (NonStopCacheException nsce) {
+            return -1;
 		} catch (NoSuchMethodError e) {
 			return -1;
 		} catch (UnsupportedOperationException e) {
@@ -113,6 +111,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 			return cache.calculateOnDiskSize() / KB;
 		} catch (UnsupportedOperationException e) {
 			return -1;
+		} catch (NonStopCacheException nsce) {
+	         return -1;
 		} catch (NoSuchMethodError e) {
 			return -1;
 		}
@@ -123,6 +123,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 			return cache.calculateInMemorySize() / KB;
 		} catch (NoSuchMethodError e) {
 			return -1;
+        } catch (NonStopCacheException nsce) {
+            return -1;
 		} catch (UnsupportedOperationException e) {
 			return -1;
 		}

@@ -1,5 +1,7 @@
 package org.terracotta.ehcache.testing.termination;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
 
 public class IterationTerminationCondition implements TerminationCondition {
@@ -16,14 +18,14 @@ public class IterationTerminationCondition implements TerminationCondition {
 
   class IteratedCondition implements Condition {
 
-    private long counter = 0;
+    private final AtomicLong counter;
 
     public IteratedCondition(final CacheWrapper[] caches) {
-      // no-op
+      counter = new AtomicLong();
     }
 
     public boolean isMet() {
-      return ++counter > nbIterations - 1;
+      return counter.incrementAndGet() > nbIterations - 1;
     }
   }
 }

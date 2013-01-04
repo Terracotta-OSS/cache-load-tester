@@ -104,4 +104,46 @@ public class StatsReporterTest {
 				read.getThroughput() + write.getThroughput());
 		manager.shutdown();
 	}
+
+	@Test
+	public void testNode() {
+		CacheManager manager = new CacheManager(new Configuration()
+				.name("testNode")
+				.maxBytesLocalHeap(50, MemoryUnit.MEGABYTES)
+				.defaultCache(new CacheConfiguration("default", 0)));
+
+		Ehcache cache1 = manager.addCacheIfAbsent("cache1");
+		Ehcache cache2 = manager.addCacheIfAbsent("cache2");
+
+		CacheLoader loader = CacheLoader
+				.load(cache1, cache2)
+				.using(StringGenerator.integers(),
+						ByteArrayGenerator.randomSize(300, 1200))
+				.enableStatistics(true).sequentially().iterate(10000)
+				.logUsing(new ConsoleStatsLoggerImpl());
+		loader.run();
+		Assert.assertEquals(10000, cache1.getSize());
+		Assert.assertEquals(10000, cache2.getSize());
+
+		for (int i = 0; i < 3; i++){
+			CacheAccessor access = CacheAccessor
+					.access(cache1, cache2)
+					.using(StringGenerator.integers(),
+							ByteArrayGenerator.randomSize(300, 1200))
+					.atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
+					.updateRatio(0.2)
+					.terminateOn(
+							new TimedTerminationCondition(10, TimeUnit.SECONDS))
+					.enableStatistics(true)
+					.logUsing(new ConsoleStatsLoggerImpl());
+
+			CacheDriver driver = ParallelDriver.inParallel(10, access);
+			driver.run();
+			StatsNode node = driver.getFinalStatsNode();
+
+			System.out.println(node);
+		}
+		manager.shutdown();
+	}
+
 }
