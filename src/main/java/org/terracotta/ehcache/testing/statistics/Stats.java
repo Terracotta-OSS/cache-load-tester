@@ -1,8 +1,6 @@
 package org.terracotta.ehcache.testing.statistics;
 
 import java.text.NumberFormat;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -23,22 +21,6 @@ public class Stats {
 	private double minLatency, maxLatency;
 
 	private Histogram histo;
-
-	private final BlockingQueue<Long> queue = new LinkedBlockingQueue<Long>();
-
-	Thread t = new Thread ( new Runnable() {
-
-        public void run() {
-            while (true){
-                try {
-                    long l = queue.take();
-                    addLong(l);
-                } catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }
-    });
 
 	public Stats() {
 		defaultInit();
@@ -78,9 +60,6 @@ public class Stats {
 		this.histo = new Histogram();
 		if (hist != null)
 			this.histo.add(hist);
-
-		t.setDaemon(true);
-		t.start();
 	}
 
 	/**
@@ -115,10 +94,6 @@ public class Stats {
 		this.nonstopExceptionCount.addAndGet(stat.nonstopExceptionCount.get());
 
 		return this;
-	}
-
-	public void addLong(long txLength){
-//	    queue.add(txLength);
 	}
 
 	/**
