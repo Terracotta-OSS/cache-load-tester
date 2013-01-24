@@ -2,12 +2,9 @@ package org.terracotta.ehcache.testing.statistics;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.security.auth.login.Configuration;
+
 import junit.framework.Assert;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.Configuration;
-import net.sf.ehcache.config.MemoryUnit;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -23,6 +20,7 @@ import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
 public class StatsReporterTest {
 
+    @Ignore
 	@Test
 	public void testStatsReporterShutdown() {
 		CacheManager manager = new CacheManager(new Configuration()
@@ -105,6 +103,7 @@ public class StatsReporterTest {
 		manager.shutdown();
 	}
 
+	@Ignore
 	@Test
 	public void testNode() {
 		CacheManager manager = new CacheManager(new Configuration()
