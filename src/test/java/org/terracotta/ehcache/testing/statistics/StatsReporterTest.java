@@ -1,11 +1,10 @@
 package org.terracotta.ehcache.testing.statistics;
 
-import java.util.concurrent.TimeUnit;
-
-import javax.security.auth.login.Configuration;
-
-import junit.framework.Assert;
-
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
@@ -17,6 +16,10 @@ import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
+
+import java.util.concurrent.TimeUnit;
+
+import junit.framework.Assert;
 
 public class StatsReporterTest {
 
