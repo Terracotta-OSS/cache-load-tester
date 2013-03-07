@@ -8,7 +8,7 @@
   <artifactId>ehcache-test-loading</artifactId>
   <packaging>jar</packaging>
   <name>ehcache-test-loading</name>
-  <version>1.0.4-SNAPSHOT</version>
+  <version>1.0.5-SNAPSHOT</version>
   <description>A test framework to load and access Ehcache Elements</description>
 
   <distributionManagement>
@@ -27,8 +27,8 @@
 
   <properties>
     <ehcache.test.version>${project.version}</ehcache.test.version>
-    <ehcache.version>2.6.5</ehcache.version>
-    <terracotta.version>3.7.4</terracotta.version>
+    <ehcache.version>2.7.0</ehcache.version>
+    <terracotta.version>4.0.0</terracotta.version>
   </properties>
 
   <dependencies>
@@ -92,7 +92,7 @@
 
     <dependency>
       <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache-core-ee</artifactId>
+      <artifactId>ehcache</artifactId>
       <version>${ehcache.version}</version>
       <scope>provided</scope>
     </dependency>

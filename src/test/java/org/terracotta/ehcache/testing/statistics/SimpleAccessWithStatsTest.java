@@ -39,7 +39,7 @@ public class SimpleAccessWithStatsTest {
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.02)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
-        .logUsing(new CsvStatsLoggerImpl("target/logs-example.csv"));
+        .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"));
 
     ParallelDriver.inParallel(4, access).run();
 
@@ -59,8 +59,9 @@ public class SimpleAccessWithStatsTest {
     Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
     CacheLoader loader = CacheLoader.load(cache1, cache2)
-        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(100, 1200))
+        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(100, 400))
         .enableStatistics(true).sequentially()
+        .addLogger(new ConsoleStatsLoggerImpl())
         .iterate(32000);
     loader.run();
 

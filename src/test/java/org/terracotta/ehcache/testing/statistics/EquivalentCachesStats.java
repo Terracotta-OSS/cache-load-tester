@@ -38,18 +38,16 @@ public class EquivalentCachesStats {
   public void testPerfsOnCountBasedCacheUnclustered() {
     Configuration configuration = new Configuration()
         .defaultCache(new CacheConfiguration().name("defaultCache")
-            .maxEntriesLocalHeap(0)
-            .statistics(true))
+            .maxEntriesLocalHeap(0))
         .cache(
             new CacheConfiguration().name("unclusteredCountBased")
                 .maxEntriesLocalHeap(0)
-                .statistics(true)
         );
     CacheManager manager = new CacheManager(configuration);
 
     accessAndStats(manager.getCache("unclusteredCountBased"));
 
-    System.out.println("unclustered=" + manager.getCache("unclusteredCountBased").calculateInMemorySize());
+    System.out.println("unclustered=" + manager.getCache("unclusteredCountBased").getStatistics().getLocalHeapSizeInBytes());
 
     manager.shutdown();
   }
@@ -60,18 +58,16 @@ public class EquivalentCachesStats {
 
     Configuration configuration = new Configuration()
         .defaultCache(new CacheConfiguration().name("defaultCache")
-            .maxBytesLocalHeap(350, MemoryUnit.MEGABYTES)
-            .statistics(true))
+            .maxBytesLocalHeap(350, MemoryUnit.MEGABYTES))
         .cache(
             new CacheConfiguration().name("unclusteredSizeBased")
                 .maxBytesLocalHeap(350, MemoryUnit.MEGABYTES)
-                .statistics(true)
         );
     CacheManager manager = new CacheManager(configuration);
 
     accessAndStats(manager.getCache("unclusteredSizeBased"));
 
-    System.out.println("unclustered=" + manager.getCache("unclusteredSizeBased").calculateInMemorySize());
+    System.out.println("unclustered=" + manager.getCache("unclusteredSizeBased").getStatistics().getLocalHeapSizeInBytes());
 
     manager.shutdown();
   }
@@ -85,7 +81,6 @@ public class EquivalentCachesStats {
         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
       }
     }
-
   }
 
   private void accessAndStats(final Cache cache) {
