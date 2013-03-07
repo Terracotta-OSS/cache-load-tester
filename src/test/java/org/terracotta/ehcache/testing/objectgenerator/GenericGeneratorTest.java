@@ -46,7 +46,7 @@ public class GenericGeneratorTest {
       load.run();
       Assert.assertTrue(cache.getSize() == nbIterations);
       for (int i = 0; i < nbIterations; i++) {
-        System.out.println(cache.get("" + i).getObjectKey().toString());
+        System.out.println(cache.get("" + i).getValue().toString());
       }
     } finally {
       manager.shutdown();

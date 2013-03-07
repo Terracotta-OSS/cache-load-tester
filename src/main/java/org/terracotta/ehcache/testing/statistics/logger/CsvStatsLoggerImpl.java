@@ -1,12 +1,6 @@
 package org.terracotta.ehcache.testing.statistics.logger;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
-import org.terracotta.ehcache.testing.statistics.Stats;
-import org.terracotta.ehcache.testing.statistics.StatsNode;
-
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -18,59 +12,51 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.statistics.Stats;
+import org.terracotta.ehcache.testing.statistics.StatsNode;
+
+import au.com.bytecode.opencsv.CSVWriter;
+
 public class CsvStatsLoggerImpl implements StatsLogger {
 
-  private CSVWriter logger;
+  private CSVWriter log;
   private final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
   public CsvStatsLoggerImpl(String file) {
     Writer writer;
     try {
-      File myFile = new File(file);
-      File parentDir = myFile.getParentFile();
-      if (!parentDir.exists()) {
-        parentDir.mkdirs();
-      }
-      writer = new BufferedWriter(new FileWriter(myFile));
-      System.out.println(myFile.getAbsolutePath());
-      this.logger = new CSVWriter(writer);
+      writer = new BufferedWriter(new FileWriter(file));
+      this.log = new CSVWriter(writer);
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private void header() {
-    logger.writeNext(new String[] {
-        "Date", "Cache", "Txn_Count", "TPS", "Avg_Lat", "Min_Lat", "Max_Lat" });
-  }
+  public void log(StatsNode node) {
+    Map<String, Stats> readStatsList;
+    Map<String, Stats> writeStatsList;
 
-  public void log(final StatsNode node) {
-    Map<String, Stats> readStatsList = node.getReadStatsList();
-    Map<String, Stats> writeStatsList = node.getWriteStatsList();
+    readStatsList = node.getReadStatsList();
+    writeStatsList = node.getWriteStatsList();
 
-    logNodeStats(readStatsList, writeStatsList);
-  }
-
-  private void logNodeStats(final Map<String, Stats> readStatsList,
-                            final Map<String, Stats> writeStatsList) {
+    Stats nodeTotal = new Stats();
+    for (final String name : readStatsList.keySet()) {
+      Stats readStats = readStatsList.get(name).getPeriodStats();
+      Stats writeStats = writeStatsList.get(name).getPeriodStats();
+      Stats total = new Stats(readStats).add(writeStats).getPeriodStats();
+      nodeTotal.add(total);
+    }
 
     List<String> statsList = new ArrayList<String>();
     statsList.add(df.format(Calendar.getInstance().getTime()));
+    statsList.add("" + nodeTotal.getTxnCount());
+    statsList.add("" + nodeTotal.getThroughput());
+    statsList.add("" + nodeTotal.getAvgLatency());
+    statsList.add("" + nodeTotal.getMinLatency());
+    statsList.add("" + nodeTotal.getMaxLatency());
 
-    for (final String name : readStatsList.keySet()) {
-      Stats readStats, writeStats, stat;
 
-      readStats = readStatsList.get(name).getPeriodStats();
-      writeStats = writeStatsList.get(name).getPeriodStats();
-
-      stat = new Stats(readStats).add(writeStats);
-
-      statsList.add("" + stat.getTxnCount());
-      statsList.add("" + stat.getThroughput());
-      statsList.add("" + stat.getAvgLatency());
-      statsList.add("" + stat.getMinLatency());
-      statsList.add("" + stat.getMaxLatency());
-    }
     logToCSV(statsList.toArray(new String[statsList.size()]));
   }
 
@@ -86,8 +72,8 @@ public class CsvStatsLoggerImpl implements StatsLogger {
 
   private void logToCSV(String[] items) {
     try {
-      logger.writeNext(items);
-      logger.flush();
+      log.writeNext(items);
+      log.flush();
     } catch (IOException e) {
       e.printStackTrace();
     }

@@ -96,7 +96,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 
 	public long getOffHeapSize() {
 		try {
-			return cache.getStatistics().getLocalOffHeapSizeInBytes() / KB;
+			return cache.calculateOffHeapSize() / KB;
         } catch (NonStopCacheException nsce) {
             return -1;
 		} catch (NoSuchMethodError e) {
@@ -108,7 +108,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 
 	public long getOnDiskSize() {
 		try {
-			return cache.getStatistics().getLocalDiskSizeInBytes() / KB;
+			return cache.calculateOnDiskSize() / KB;
 		} catch (UnsupportedOperationException e) {
 			return -1;
 		} catch (NonStopCacheException nsce) {
@@ -120,7 +120,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 
 	public long getOnHeapSize() {
 		try {
-			return cache.getStatistics().getLocalHeapSizeInBytes() / KB;
+			return cache.calculateInMemorySize() / KB;
 		} catch (NoSuchMethodError e) {
 			return -1;
         } catch (NonStopCacheException nsce) {

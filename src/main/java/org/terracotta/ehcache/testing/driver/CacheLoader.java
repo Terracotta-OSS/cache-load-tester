@@ -97,14 +97,8 @@ public class CacheLoader implements CacheDriver {
     return this;
   }
 
-  @Deprecated
   public CacheLoader logUsing(StatsLogger... loggers) {
     reporter.logUsing(loggers);
-    return this;
-  }
-
-  public CacheLoader addLogger(StatsLogger logger) {
-    reporter.addLogger(logger);
     return this;
   }
 

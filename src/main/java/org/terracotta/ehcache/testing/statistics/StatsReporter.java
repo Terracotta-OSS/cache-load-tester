@@ -109,7 +109,7 @@ public class StatsReporter {
             TimeUnit.SECONDS.sleep(reportPeriod);
           } catch (InterruptedException e) {
 //			e.printStackTrace();
-        	logger.debug("StatsReporter interrupted.");
+        	logger.debug("StatsReporter interuppted.");
             return;
           }
           doReport();
@@ -148,7 +148,7 @@ public class StatsReporter {
       t.interrupt();
       t.join();
       finalise();
-      doEndReport();
+      doReport();
     } catch (InterruptedException e) {
 //			e.printStackTrace();
     }
@@ -196,11 +196,6 @@ public class StatsReporter {
     if (statsLoggers.size() == 0) {
       logger.warn("You didn't set any StatsLogger to log the stats. You can set one or more using: logUsing(StatsLogger... loggers)");
     }
-    for (StatsLogger statsLogger : statsLoggers)
-      statsLogger.log(node);
-  }
-
-  private void doEndReport() {
     for (StatsLogger statsLogger : statsLoggers)
       statsLogger.log(node);
   }

@@ -185,7 +185,6 @@ public abstract class CacheAccessor implements CacheDriver {
    * @param loggers
    * @return CacheAccessor
    */
-  @Deprecated
   public CacheAccessor logUsing(StatsLogger... loggers) {
     reporter.logUsing(loggers);
     return this;
@@ -665,7 +664,7 @@ public abstract class CacheAccessor implements CacheDriver {
 		this.statistics = statistics;
 		for (IndividualCacheAccessor accessor : accessors)
 			accessor.enableStatistics(statistics);
-	  return this;
+		return this;
 	}
 
 	@Override
