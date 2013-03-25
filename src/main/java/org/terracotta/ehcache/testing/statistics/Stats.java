@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 public class Stats {
 	private static final NumberFormat nf = NumberFormat.getInstance();
 	private static final Logger log = LoggerFactory.getLogger(Stats.class);
+    private static final boolean enableHisto = Boolean.parseBoolean(System.getProperty("enable.histo", "false"));
 
 	private Stats period = null;
 	private AtomicLong transactionsCount;
@@ -57,9 +58,11 @@ public class Stats {
 		if (endTime != null)
 			this.endTime = new AtomicLong(endTime.get());
 
-		this.histo = new Histogram();
-		if (hist != null)
-			this.histo.add(hist);
+        if (enableHisto){
+            this.histo = new Histogram();
+            if (hist != null)
+                this.histo.add(hist);
+        }
 	}
 
 	/**
@@ -90,7 +93,8 @@ public class Stats {
 				this.endTime.set(stat.endTime.get());
 		}
 
-		this.histo.add(stat.histo);
+        if (enableHisto)
+            this.histo.add(stat.histo);
 		this.nonstopExceptionCount.addAndGet(stat.nonstopExceptionCount.get());
 
 		return this;
@@ -118,13 +122,15 @@ public class Stats {
 			maxLatency = txLength;
 		}
 
-		histo.add(txLength);
-
 		if (period == null) {
 			period = new Stats();
 		}
 
-		period.histo.add(txLength);
+        if (enableHisto){
+            histo.add(txLength);
+            period.histo.add(txLength);
+        }
+
 		period.transactionsCount.incrementAndGet();
 		period.totalTxLatency.addAndGet(txLength);
 		if (txLength < period.minLatency)
