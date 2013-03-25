@@ -58,8 +58,8 @@ public class Stats {
 		if (endTime != null)
 			this.endTime = new AtomicLong(endTime.get());
 
+		this.histo = new Histogram();
         if (enableHisto){
-            this.histo = new Histogram();
             if (hist != null)
                 this.histo.add(hist);
         }
