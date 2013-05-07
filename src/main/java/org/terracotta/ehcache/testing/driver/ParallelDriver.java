@@ -1,5 +1,10 @@
 package org.terracotta.ehcache.testing.driver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.ehcache.testing.statistics.Stats;
+import org.terracotta.ehcache.testing.statistics.StatsNode;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,11 +12,6 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.statistics.Stats;
-import org.terracotta.ehcache.testing.statistics.StatsNode;
 
 public class ParallelDriver implements CacheDriver {
 
@@ -91,6 +91,7 @@ public class ParallelDriver implements CacheDriver {
     private static final long serialVersionUID = -2151936042723864607L;
 
     private final Map<Thread, Throwable> causes;
+    private final String NEW_LINE = System.getProperty("line.separator");
 
     public PooledException(Map<Thread, Throwable> causes) {
       if (causes.size() == 1) {
@@ -103,6 +104,36 @@ public class ParallelDriver implements CacheDriver {
     public Map<Thread, Throwable> getCauses() {
       return Collections.unmodifiableMap(causes);
     }
+
+    @Override
+    public String getMessage() {
+      StringBuilder sb = new StringBuilder();
+
+      sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
+      for (Map.Entry<Thread, Throwable> entry : causes.entrySet()) {
+        sb.append("Throwable exception").append(NEW_LINE)
+            .append(entry.getKey().getName()).append(NEW_LINE)
+            .append(entry.getValue().getMessage()).append(NEW_LINE)
+            .append("   ----------   ");
+
+      }
+      return sb.toString();
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+      StringBuilder sb = new StringBuilder();
+
+      sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
+      for (Map.Entry<Thread, Throwable> entry : causes.entrySet()) {
+        sb.append("Throwable exception").append(NEW_LINE)
+            .append(entry.getKey().getName()).append(NEW_LINE)
+            .append(entry.getValue().getLocalizedMessage()).append(NEW_LINE)
+            .append("   ----------   ");
+      }
+      return sb.toString();
+    }
+
   }
 
   static class DriverThreadGroup extends ThreadGroup {
@@ -141,9 +172,9 @@ public class ParallelDriver implements CacheDriver {
   }
 
   public StatsNode getFinalStatsNode() {
-	    Iterator<? extends CacheDriver> iterator = drivers.iterator();
-	    if (iterator.hasNext())
-	      return iterator.next().getFinalStatsNode();
-	    return null;
+    Iterator<? extends CacheDriver> iterator = drivers.iterator();
+    if (iterator.hasNext())
+      return iterator.next().getFinalStatsNode();
+    return null;
   }
 }
