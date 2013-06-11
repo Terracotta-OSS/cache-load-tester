@@ -1,10 +1,5 @@
 package org.terracotta.ehcache.testing.driver;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.statistics.Stats;
-import org.terracotta.ehcache.testing.statistics.StatsNode;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,10 +8,18 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.ehcache.testing.statistics.Stats;
+import org.terracotta.ehcache.testing.statistics.StatsNode;
+
 public class ParallelDriver implements CacheDriver {
 
   private static final Logger log = LoggerFactory.getLogger(ParallelDriver.class);
   private final Collection<? extends CacheDriver> drivers;
+  private final long threadGroupShutdownTimeout = Long.parseLong(System.getProperty("threadgroup.shutdown.timeout", "120000"));
+  private final long parallelDriverThreadSleep = Long.parseLong(System.getProperty("parallel.driver.thread.sleep", "2000"));
+  
 
   public static CacheDriver inParallel(int count, CacheDriver job) {
     return new ParallelDriver(Collections.nCopies(count, job));
@@ -30,7 +33,7 @@ public class ParallelDriver implements CacheDriver {
     this.drivers = drivers;
   }
 
-  public void run() {
+public void run() {
     DriverThreadGroup group = new DriverThreadGroup();
     try {
       Collection<Thread> threads = new ArrayList<Thread>(drivers.size());
@@ -60,7 +63,12 @@ public class ParallelDriver implements CacheDriver {
       }
     } finally {
       try {
-        while (group.activeCount() != 0) {
+    	  long totalSleepCount = threadGroupShutdownTimeout / parallelDriverThreadSleep;
+    	  if(totalSleepCount < 1){
+    		  totalSleepCount = 1;
+    	  }
+    	  long sleepCount = 0;
+        while (group.activeCount() != 0 && sleepCount < totalSleepCount) {
           log.warn("Shutting down Thread group...");
           Thread[] list = new Thread[group.activeCount()];
           group.enumerate(list);
@@ -71,9 +79,24 @@ public class ParallelDriver implements CacheDriver {
               log.debug("{}", s);
           }
           group.interrupt();
-          Thread.sleep(2000);
+          Thread.sleep(parallelDriverThreadSleep);
+          sleepCount++;
           group.interrupt();
         }
+        
+        if(sleepCount >= totalSleepCount){
+        	log.info("Timeout: "+ threadGroupShutdownTimeout +" ms occurred while waiting for thread group to shutdown");
+        	Thread[] list = new Thread[group.activeCount()];
+        	group.enumerate(list);
+        	
+        	for(Thread t : list){
+        		log.debug("======="+t.getName()+"=======");
+        		for(StackTraceElement s : t.getStackTrace()){
+        			log.debug("{}", s);
+        		}
+        	}
+        }
+        
         group.destroy();
       } catch (Exception e) {
         e.printStackTrace();
