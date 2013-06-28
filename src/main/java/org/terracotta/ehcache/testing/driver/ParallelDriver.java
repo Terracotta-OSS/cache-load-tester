@@ -1,25 +1,28 @@
 package org.terracotta.ehcache.testing.driver;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class ParallelDriver implements CacheDriver {
 
   private static final Logger log = LoggerFactory.getLogger(ParallelDriver.class);
   private final Collection<? extends CacheDriver> drivers;
-  private final long threadGroupShutdownTimeout = Long.parseLong(System.getProperty("threadgroup.shutdown.timeout", "120000"));
-  private final long parallelDriverThreadSleep = Long.parseLong(System.getProperty("parallel.driver.thread.sleep", "2000"));
-  
+  private final ExecutorService executorService;
 
   public static CacheDriver inParallel(int count, CacheDriver job) {
     return new ParallelDriver(Collections.nCopies(count, job));
@@ -31,100 +34,55 @@ public class ParallelDriver implements CacheDriver {
 
   public ParallelDriver(Collection<? extends CacheDriver> drivers) {
     this.drivers = drivers;
+    this.executorService = Executors.newFixedThreadPool(drivers.size());
   }
 
-public void run() {
-    DriverThreadGroup group = new DriverThreadGroup();
+  public void run() {
+    Map<Future, Throwable> causes = new HashMap<Future, Throwable>();
     try {
-      Collection<Thread> threads = new ArrayList<Thread>(drivers.size());
+      List<Future> futures = new ArrayList<Future>();
       for (CacheDriver driver : drivers) {
-        threads.add(new Thread(group, driver, "ParallelDriver-Thread-" + driver.getClass().getSimpleName()));
+        futures.add(executorService.submit(driver));
       }
-      for (Thread t : threads) {
-        t.start();
-      }
-
-      boolean interrupted = false;
-      try {
-        for (Thread t : threads) {
-          while (t.isAlive()) {
-            try {
-              t.join();
-            } catch (InterruptedException e) {
-              interrupted = true;
-              e.printStackTrace();
-            }
+      for (Future future : futures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          causes.put(future, e.getCause());
+          // This is a timeout of 60 seconds before shutting down in case of an exception
+          Thread.sleep(60000);
+          for (Future futureToCancel : futures) {
+            if (!futureToCancel.isDone())
+              futureToCancel.cancel(true);
           }
         }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
       }
+
+    } catch (InterruptedException e) {
+      executorService.shutdown();
     } finally {
-      try {
-    	  long totalSleepCount = threadGroupShutdownTimeout / parallelDriverThreadSleep;
-    	  if(totalSleepCount < 1){
-    		  totalSleepCount = 1;
-    	  }
-    	  long sleepCount = 0;
-        while (group.activeCount() != 0 && sleepCount < totalSleepCount) {
-          log.warn("Shutting down Thread group...");
-          Thread[] list = new Thread[group.activeCount()];
-          group.enumerate(list);
-
-          for (Thread t : list) {
-            log.debug("================ " + t.getName() + " =================");
-            for (StackTraceElement s : t.getStackTrace())
-              log.debug("{}", s);
-          }
-          group.interrupt();
-          Thread.sleep(parallelDriverThreadSleep);
-          sleepCount++;
-          group.interrupt();
+      if (!causes.isEmpty()) {
+        for (Throwable tw : causes.values()){
+          tw.printStackTrace();
         }
-        
-        if(sleepCount >= totalSleepCount){
-        	log.info("Timeout: "+ threadGroupShutdownTimeout +" ms occurred while waiting for thread group to shutdown");
-        	Thread[] list = new Thread[group.activeCount()];
-        	group.enumerate(list);
-        	
-        	for(Thread t : list){
-        		log.debug("======="+t.getName()+"=======");
-        		for(StackTraceElement s : t.getStackTrace()){
-        			log.debug("{}", s);
-        		}
-        	}
-        }
-        
-        group.destroy();
-      } catch (Exception e) {
-        e.printStackTrace();
+        throw new PooledException(causes);
       }
-      log.warn("ThreadGroup shutdown complete.");
-    }
-    PooledException pooled = group.getPooledException();
-    if (pooled != null) {
-      throw pooled;
     }
   }
 
   public static class PooledException extends RuntimeException {
 
-    private static final long serialVersionUID = -2151936042723864607L;
-
-    private final Map<Thread, Throwable> causes;
+    private final Map<Future, Throwable> causes;
     private final String NEW_LINE = System.getProperty("line.separator");
 
-    public PooledException(Map<Thread, Throwable> causes) {
+    public PooledException(Map<Future, Throwable> causes) {
       if (causes.size() == 1) {
         initCause(causes.values().iterator().next());
       }
-
       this.causes = causes;
     }
 
-    public Map<Thread, Throwable> getCauses() {
+    public Map<Future, Throwable> getCauses() {
       return Collections.unmodifiableMap(causes);
     }
 
@@ -133,9 +91,9 @@ public void run() {
       StringBuilder sb = new StringBuilder();
 
       sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
-      for (Map.Entry<Thread, Throwable> entry : causes.entrySet()) {
+      for (Map.Entry<Future, Throwable> entry : causes.entrySet()) {
         sb.append("Throwable exception").append(NEW_LINE)
-            .append(entry.getKey().getName()).append(NEW_LINE)
+            .append(entry.getKey().toString()).append(NEW_LINE)
             .append(entry.getValue().getMessage()).append(NEW_LINE)
             .append("   ----------   ");
 
@@ -148,39 +106,15 @@ public void run() {
       StringBuilder sb = new StringBuilder();
 
       sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
-      for (Map.Entry<Thread, Throwable> entry : causes.entrySet()) {
+      for (Map.Entry<Future, Throwable> entry : causes.entrySet()) {
         sb.append("Throwable exception").append(NEW_LINE)
-            .append(entry.getKey().getName()).append(NEW_LINE)
+            .append(entry.getKey().toString()).append(NEW_LINE)
             .append(entry.getValue().getLocalizedMessage()).append(NEW_LINE)
             .append("   ----------   ");
       }
       return sb.toString();
     }
 
-  }
-
-  static class DriverThreadGroup extends ThreadGroup {
-
-    private final Map<Thread, Throwable> failures = Collections.synchronizedMap(new IdentityHashMap<Thread, Throwable>());
-
-    public DriverThreadGroup() {
-      super("ParallelDriver");
-    }
-
-    @Override
-    public void uncaughtException(Thread thread, Throwable throwable) {
-      failures.put(thread, throwable);
-    }
-
-    public PooledException getPooledException() {
-      if (failures.isEmpty()) {
-        return null;
-      } else {
-        for (Throwable tw : failures.values())
-          tw.printStackTrace();
-        return new PooledException(failures);
-      }
-    }
   }
 
   /**
