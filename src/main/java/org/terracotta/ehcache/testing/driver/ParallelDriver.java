@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class ParallelDriver implements CacheDriver {
 
@@ -57,9 +58,10 @@ public class ParallelDriver implements CacheDriver {
           }
         }
       }
-
-    } catch (InterruptedException e) {
       executorService.shutdown();
+      executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+    } catch (InterruptedException e) {
+      executorService.shutdownNow();
     } finally {
       if (!causes.isEmpty()) {
         for (Throwable tw : causes.values()){
