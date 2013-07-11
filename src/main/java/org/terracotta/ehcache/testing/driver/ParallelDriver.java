@@ -62,6 +62,7 @@ public class ParallelDriver implements CacheDriver {
       executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     } catch (InterruptedException e) {
       executorService.shutdownNow();
+      Thread.currentThread().interrupt();
     } finally {
       if (!causes.isEmpty()) {
         for (Throwable tw : causes.values()){
