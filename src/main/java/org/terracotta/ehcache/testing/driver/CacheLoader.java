@@ -28,6 +28,7 @@ public class CacheLoader implements CacheDriver {
 
   private final Collection<CacheWrapper> caches;
 
+  private boolean useWithWriter = false;
   private boolean statistics = false;
   private SequenceGenerator sequenceGenerator = null;
   private ObjectGenerator keyGenerator = null;
@@ -48,6 +49,7 @@ public class CacheLoader implements CacheDriver {
     this.terminationCondition = loader.terminationCondition;
     this.sequenceGenerator = sequenceGenerator;
     this.statistics = loader.statistics;
+    this.useWithWriter = loader.useWithWriter;
   }
 
   /**
@@ -171,6 +173,13 @@ public class CacheLoader implements CacheDriver {
     for (CacheWrapper cache : caches)
       cache.setStatisticsEnabled(enabled);
     this.statistics = enabled;
+    return this;
+  }
+
+  public CacheLoader useWithWriter(boolean enabled) {
+    for (CacheWrapper cache : caches)
+      cache.setUseWithWriter(enabled);
+    this.useWithWriter = enabled;
     return this;
   }
 

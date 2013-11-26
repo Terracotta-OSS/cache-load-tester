@@ -27,7 +27,7 @@
 
   <properties>
     <ehcache.test.version>${project.version}</ehcache.test.version>
-    <ehcache.version>2.7.0</ehcache.version>
+    <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
     <terracotta.version>4.0.0</terracotta.version>
   </properties>
 
@@ -92,10 +92,18 @@
 
     <dependency>
       <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache</artifactId>
+      <artifactId>ehcache-ee</artifactId>
       <version>${ehcache.version}</version>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.qa</groupId>
+      <artifactId>license-wrapper</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+
 
     <dependency>
       <groupId>com.jayway.awaitility</groupId>

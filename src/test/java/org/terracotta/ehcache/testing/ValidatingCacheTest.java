@@ -39,6 +39,34 @@ public class ValidatingCacheTest {
   }
 
   @Test
+  public void testEqualsObjectValidation() {
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    try {
+      Ehcache one = manager.addCacheIfAbsent("one");
+      CacheDriver load = CacheLoader.load(one).using(StringGenerator.integers(),
+          new ObjectGenerator() {
+            @Override
+            public Object generate(final long seed) {
+              return new TestingObject(seed+1);
+            }
+          })
+          .sequentially().untilFilled();
+      CacheDriver access = CacheAccessor.access(one).using(StringGenerator.integers(),
+          new ObjectGenerator() {
+            @Override
+            public Object generate(final long seed) {
+              return new TestingObject(seed);
+            }
+          })
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate().stopAfter(30, TimeUnit.SECONDS);
+      SequentialDriver.inSequence(load, access).run();
+      Assert.assertTrue(one.getSize() > 0);
+    } finally {
+      manager.shutdown();
+    }
+  }
+
+  @Test
   public void testParallelEqualsValidation() {
     CacheManager manager = new CacheManager(new Configuration().name("testParallelEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
     try {
@@ -104,6 +132,48 @@ public class ValidatingCacheTest {
 
     public void validate(long seed, Object value) {
       throw new AssertionError();
+    }
+  }
+
+  public class TestingObject {
+
+    long longNb;
+    int intNb;
+    String someStr;
+    float floatNb;
+
+    public TestingObject(final long seed) {
+      Long l = new Long(seed);
+      this.longNb = l.longValue();
+      this.intNb = l.intValue();
+      this.floatNb = l.floatValue();
+      this.someStr = "somestring" + l.toString();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (!(obj instanceof TestingObject)) {
+        return false;
+      }
+      TestingObject o = (TestingObject) obj;
+      return ((getLongNb() == o.getLongNb()) && getFloatNb() == o.getFloatNb()
+              && getIntNb() == o.getIntNb() && getSomeStr().equalsIgnoreCase(o.getSomeStr()));
+    }
+
+    public long getLongNb() {
+      return longNb;
+    }
+
+    public int getIntNb() {
+      return intNb;
+    }
+
+    public String getSomeStr() {
+      return someStr;
+    }
+
+    public float getFloatNb() {
+      return floatNb;
     }
   }
 }

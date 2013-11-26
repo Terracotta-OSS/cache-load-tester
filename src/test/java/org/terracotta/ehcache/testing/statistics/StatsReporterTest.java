@@ -81,7 +81,7 @@ public class StatsReporterTest {
         .updateRatio(0.2)
         .terminateOn(
             new TimedTerminationCondition(30, TimeUnit.SECONDS))
-				.enableStatistics(true).logUsing(new ConsoleStatsLoggerImpl());
+				.enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl());
 
     CacheDriver driver = ParallelDriver.inParallel(10, access);
     driver.run();

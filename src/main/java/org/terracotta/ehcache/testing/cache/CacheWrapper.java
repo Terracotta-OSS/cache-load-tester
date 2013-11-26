@@ -97,4 +97,6 @@ public interface CacheWrapper {
 	 * @return
 	 */
 	public Ehcache getCache();
+
+  void setUseWithWriter(boolean enabled);
 }

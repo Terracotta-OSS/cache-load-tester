@@ -52,26 +52,25 @@ public class SimpleAccessWithStatsTest {
   @Test
   public void testConsoleStats() {
     CacheManager manager = new CacheManager(new Configuration().name("testCsvStats")
-        .maxBytesLocalHeap(50, MemoryUnit.MEGABYTES)
-        .defaultCache(new CacheConfiguration("default", 0)));
+        .defaultCache(new CacheConfiguration("default", 1).maxBytesLocalOffHeap(3, MemoryUnit.GIGABYTES)));
 
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
-    Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
-    CacheLoader loader = CacheLoader.load(cache1, cache2)
-        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(100, 400))
-        .enableStatistics(true).sequentially()
-        .addLogger(new ConsoleStatsLoggerImpl())
-        .iterate(32000);
-    loader.run();
+    CacheLoader loader = CacheLoader.load(cache1)
+           .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+           .enableStatistics(true).sequentially()
+        .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"))
+           .untilFilled();
+    ParallelDriver.inParallel(40, loader).run();
 
-    CacheAccessor access = CacheAccessor.access(cache1, cache2)
-        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
-        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.02)
-        .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
-        .addLogger(new ConsoleStatsLoggerImpl());
 
-    ParallelDriver.inParallel(4, access).run();
+    CacheAccessor access = CacheAccessor.access(cache1)
+         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.2).removeRatio(0.2)
+         .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS)).enableStatistics(true)
+         .addLogger(new ConsoleStatsLoggerImpl());
+
+    ParallelDriver.inParallel(40, access).run();
 
     manager.shutdown();
   }

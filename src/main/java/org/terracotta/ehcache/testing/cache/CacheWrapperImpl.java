@@ -14,8 +14,9 @@ public class CacheWrapperImpl implements CacheWrapper {
 
 	private final Ehcache cache;
 	private boolean statistics = false;
+  private boolean useWithWriter = false;
 
-	/**
+  /**
 	 * Implementation of {@link CacheWrapper}
 	 *
 	 * @param cache
@@ -30,8 +31,12 @@ public class CacheWrapperImpl implements CacheWrapper {
 	public void put(Object key, Object value) {
 		long start = (statistics) ? now() : 0;
 		try {
-			cache.put(new Element(key, value));
-		} catch (NonStopCacheException nsce) {
+      if (useWithWriter) {
+        cache.putWithWriter(new Element(key, value));
+      } else {
+        cache.put(new Element(key, value));
+      }
+    } catch (NonStopCacheException nsce) {
 			writeStats.incrementNonstopExceptionCount();
 		}
 		long end = (statistics) ? now() : 0;
@@ -131,11 +136,20 @@ public class CacheWrapperImpl implements CacheWrapper {
 	}
 
 	public void remove(Object key) {
-		cache.remove(key);
-	}
+    if (useWithWriter) {
+      cache.removeWithWriter(key);
+    } else {
+      cache.remove(key);
+    }
+  }
 
 	public Ehcache getCache() {
 		return cache;
 	}
+
+  @Override
+  public void setUseWithWriter(final boolean enabled) {
+    this.useWithWriter = enabled;
+  }
 
 }
