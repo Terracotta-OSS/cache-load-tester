@@ -53,7 +53,7 @@ public class ValidatingCacheTest {
 
   @Test
   public void testEqualsObjectValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration().name("default")));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver load = CacheLoader.load(one).using(StringGenerator.integers(),
