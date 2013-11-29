@@ -9,6 +9,12 @@ import org.junit.Test;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +48,7 @@ public class DriverTest {
       }
     });
     manager.shutdown();
+
   }
 
   @Test

@@ -131,7 +131,11 @@ public abstract class CacheAccessor implements CacheDriver {
 
   public abstract CacheAccessor validate();
 
-  public abstract CacheAccessor validateUsing(Validation validator);
+  public abstract CacheAccessor validate(final Validation.Mode validationMode);
+
+  public abstract CacheAccessor validateUsing(Validation validation);
+
+  public abstract CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation);
 
   /**
    * Enable statistics collection
@@ -236,6 +240,7 @@ public abstract class CacheAccessor implements CacheDriver {
     private TerminationCondition terminationCondition;
 
     private Validation validation;
+    private Validation.Mode validationMode;
 
     public IndividualCacheAccessor(Ehcache cache) {
       this.cacheWrapper = new CacheWrapperImpl(cache);
@@ -269,6 +274,22 @@ public abstract class CacheAccessor implements CacheDriver {
        throw new IllegalStateException("SequenceGenerator already chosen");
       }
       return this;
+    }
+
+    /**
+     * Do a get operation and validate the output.
+     * If gets a null, the validation fails
+     *
+     * @param seed
+     * @param validator
+     */
+    private void getStrictOnce(final long seed, final Validator validator) {
+      Object key = keyGenerator.generate(seed);
+      Object value = cacheWrapper.get(key);
+      if (validator == null) {
+        throw new AssertionError("Validator is null");
+      }
+      validator.validate(seed, value);
     }
 
     /**
@@ -312,12 +333,16 @@ public abstract class CacheAccessor implements CacheDriver {
     		return OPERATION.UPDATE;
     	else if (d > updateRatio && d <= (updateRatio + removeRatio))
     		return OPERATION.REMOVE;
-    	else
-    		return OPERATION.GET;
+    	else {
+        if (Validation.Mode.STRICT.equals(this.validationMode))
+      		return OPERATION.STRICT_GET;
+        else
+      		return OPERATION.GET;
+      }
     }
 
     enum OPERATION {
-    	GET, UPDATE, REMOVE;
+      STRICT_GET, GET, UPDATE, REMOVE;
     }
 
     /**
@@ -333,6 +358,9 @@ public abstract class CacheAccessor implements CacheDriver {
 			e.printStackTrace();
 		}
    	  switch (getNextOperation()){
+   	  	case STRICT_GET:
+   	  		getStrictOnce(seed, validator);
+   	  		break;
    	  	case GET:
    	  		getOnce(seed, validator);
    	  		break;
@@ -345,7 +373,7 @@ public abstract class CacheAccessor implements CacheDriver {
    	  }
     }
 
-	/**
+    /**
 	 * Executes the test. Starts {@link StatsReporter} thread and executes
 	 * {@link #runOnce(int, Validator)} till {@link TerminationCondition} is
 	 * met. Stops reporter thread.
@@ -406,13 +434,24 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
+    public CacheAccessor validate(final Validation.Mode validationMode) {
+      return validateUsing(validationMode, new EqualityValidation());
+    }
+
+    @Override
     public CacheAccessor validate() {
-      return validateUsing(new EqualityValidation());
+      return validate(Validation.Mode.UPDATE);
     }
 
     @Override
     public CacheAccessor validateUsing(Validation validation) {
+      return validateUsing(Validation.Mode.UPDATE, validation);
+    }
+
+    @Override
+    public CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation) {
       if (this.validation == null) {
+        this.validationMode = validationMode;
         this.validation = validation;
       } else {
         throw new IllegalStateException("Validation already chosen");
@@ -613,10 +652,15 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor validate() {
+    public CacheAccessor validateUsing(Validation validation) {
+      return validateUsing(Validation.Mode.UPDATE, validation);
+    }
+
+    @Override
+    public CacheAccessor validate(final Validation.Mode validationMode) {
       for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
         try {
-          it.next().validate();
+          it.next().validate(validationMode);
         } catch (IllegalStateException e) {
           if (!it.hasNext()) {
             throw e;
@@ -627,10 +671,15 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
-    public CacheAccessor validateUsing(Validation validator) {
+    public CacheAccessor validate() {
+      return validate(Validation.Mode.UPDATE);
+    }
+
+    @Override
+    public CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation) {
       for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
         try {
-          it.next().validateUsing(validator);
+          it.next().validateUsing(validationMode, validation);
         } catch (IllegalStateException e) {
           if (!it.hasNext()) {
             throw e;

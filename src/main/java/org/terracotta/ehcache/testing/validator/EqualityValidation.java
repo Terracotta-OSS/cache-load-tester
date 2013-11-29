@@ -17,10 +17,13 @@ public class EqualityValidation implements Validation {
     public EqualityValidator(ObjectGenerator valueGenerator) {
       this.valueGenerator = valueGenerator;
     }
-
     public void validate(long seed, Object value) {
       Object expected = valueGenerator.generate(seed);
-      if (value.getClass().isArray() && expected.getClass().isArray()) {
+      if (value == null) {
+        if (expected != null) {
+          throw new AssertionError();
+        }
+      } else if (value.getClass().isArray() && expected.getClass().isArray()) {
         if (Array.getLength(expected) != Array.getLength(value)) {
           throw new AssertionError();
         } else {
