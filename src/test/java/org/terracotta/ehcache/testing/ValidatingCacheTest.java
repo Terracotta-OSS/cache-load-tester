@@ -60,7 +60,35 @@ public class ValidatingCacheTest {
           new ObjectGenerator() {
             @Override
             public Object generate(final long seed) {
-              return new TestingObject(seed+1);
+              return new TestingObject(seed);
+            }
+          })
+          .sequentially().untilFilled();
+      CacheDriver access = CacheAccessor.access(one).using(StringGenerator.integers(),
+          new ObjectGenerator() {
+            @Override
+            public Object generate(final long seed) {
+              return new TestingObject(seed);
+            }
+          })
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(30, TimeUnit.SECONDS);
+      SequentialDriver.inSequence(load, access).run();
+      Assert.assertTrue(one.getSize() > 0);
+    } finally {
+      manager.shutdown();
+    }
+  }
+
+  @Test(expected = AssertionError.class)
+  public void testNotEqualsObjectValidation() {
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    try {
+      Ehcache one = manager.addCacheIfAbsent("one");
+      CacheDriver load = CacheLoader.load(one).using(StringGenerator.integers(),
+          new ObjectGenerator() {
+            @Override
+            public Object generate(final long seed) {
+              return new TestingObject(seed + 1);
             }
           })
           .sequentially().untilFilled();

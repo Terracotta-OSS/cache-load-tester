@@ -52,7 +52,7 @@ public class SimpleAccessWithStatsTest {
   @Test
   public void testConsoleStats() {
     CacheManager manager = new CacheManager(new Configuration().name("testCsvStats")
-        .defaultCache(new CacheConfiguration("default", 1).maxBytesLocalOffHeap(3, MemoryUnit.GIGABYTES)));
+        .defaultCache(new CacheConfiguration("default", 1).maxBytesLocalOffHeap(300, MemoryUnit.MEGABYTES)));
 
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
 
