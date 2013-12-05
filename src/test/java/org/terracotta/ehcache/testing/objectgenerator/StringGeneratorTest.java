@@ -31,4 +31,26 @@ public class StringGeneratorTest {
     Assert.assertEquals("2222222222", generate.toString());
   }
 
+  @Test
+  public void testSameSeededRandomString() {
+    final ObjectGenerator generator1 = StringGenerator.randomString(1, 10);
+    final ObjectGenerator generator2 = StringGenerator.randomString(1, 10);
+
+    final Object generate1 = generator1.generate(20);
+    final Object generate2 = generator2.generate(20);
+
+    Assert.assertEquals(generate1, generate2);
+  }
+
+  @Test
+  public void testDifferentSeededRandomString() {
+    final ObjectGenerator generator1 = StringGenerator.randomString(1, 10);
+    final ObjectGenerator generator2 = StringGenerator.randomString(2, 10);
+
+    final Object generate1 = generator1.generate(20);
+    final Object generate2 = generator2.generate(20);
+
+    Assert.assertNotSame(generate1, generate2);
+  }
+
 }
