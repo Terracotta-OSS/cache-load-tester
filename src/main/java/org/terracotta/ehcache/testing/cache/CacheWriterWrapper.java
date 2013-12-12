@@ -23,7 +23,7 @@ public class CacheWriterWrapper extends CacheWrapperImpl {
     System.out.println("------------ PUT");
     long start = (statistics) ? now() : 0;
     try {
-      cache.put(new Element(key, value));
+      cache.putWithWriter(new Element(key, value));
     } catch (NonStopCacheException nsce) {
       writeStats.incrementNonstopExceptionCount();
     }
