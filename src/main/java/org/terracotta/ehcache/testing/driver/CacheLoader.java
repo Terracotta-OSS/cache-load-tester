@@ -1,5 +1,7 @@
 package org.terracotta.ehcache.testing.driver;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -28,7 +30,6 @@ public class CacheLoader implements CacheDriver {
 
   private final Collection<CacheWrapper> caches;
 
-  private boolean useWithWriter = false;
   private boolean statistics = false;
   private SequenceGenerator sequenceGenerator = null;
   private ObjectGenerator keyGenerator = null;
@@ -36,10 +37,17 @@ public class CacheLoader implements CacheDriver {
   private TerminationCondition terminationCondition = null;
   private final StatsReporter reporter = StatsReporter.getInstance();
 
-  private CacheLoader(Ehcache[] caches) {
-    this.caches = new ArrayList<CacheWrapper>();
-    for (Ehcache cache : caches)
-      this.caches.add(new CacheWrapperImpl(cache));
+  private CacheLoader(final Class<? extends CacheWrapper> cacheWrapperClass, Ehcache[] caches) throws RuntimeException {
+    try {
+      this.caches = new ArrayList<CacheWrapper>();
+      for (Ehcache cache : caches) {
+        Constructor constructor = cacheWrapperClass.getDeclaredConstructor(Ehcache.class);
+        CacheWrapper wrapper = (CacheWrapper)constructor.newInstance(cache);
+        this.caches.add(wrapper);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private CacheLoader(CacheLoader loader, SequenceGenerator sequenceGenerator) {
@@ -49,17 +57,20 @@ public class CacheLoader implements CacheDriver {
     this.terminationCondition = loader.terminationCondition;
     this.sequenceGenerator = sequenceGenerator;
     this.statistics = loader.statistics;
-    this.useWithWriter = loader.useWithWriter;
   }
 
   /**
-   * Sets the caches to be loaded. It just assigns doesnt adds to list.
+   * Sets the caches to be loaded. It just assigns doesn't add to list.
    *
    * @param caches
    * @return this
    */
-  public static CacheLoader load(Ehcache... caches) {
-    return new CacheLoader(caches);
+  public static CacheLoader load(Ehcache... caches)  {
+    return new CacheLoader(CacheWrapperImpl.class, caches);
+  }
+
+  public static CacheLoader load(final Class<? extends CacheWrapper> cacheWrapperClass, Ehcache... caches) {
+    return new CacheLoader(cacheWrapperClass, caches);
   }
 
   public CacheDriver partition(int count) {
@@ -173,13 +184,6 @@ public class CacheLoader implements CacheDriver {
     for (CacheWrapper cache : caches)
       cache.setStatisticsEnabled(enabled);
     this.statistics = enabled;
-    return this;
-  }
-
-  public CacheLoader useWithWriter(boolean enabled) {
-    for (CacheWrapper cache : caches)
-      cache.setUseWithWriter(enabled);
-    this.useWithWriter = enabled;
     return this;
   }
 

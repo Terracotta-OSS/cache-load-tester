@@ -12,6 +12,7 @@ import net.sf.ehcache.config.MemoryUnit;
 
 import org.junit.Test;
 
+import org.terracotta.ehcache.testing.cache.CacheWriterWrapper;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
@@ -50,6 +51,21 @@ public class SimpleSingleCacheTest {
     }
   }
   
+  @Test
+  public void testSimpleLoadWithCustomWrapper() {
+    CacheManager manager = new CacheManager(new Configuration().name("testSimpleLoad").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    try {
+      Ehcache one = manager.addCacheIfAbsent("one");
+      CacheDriver load = CacheLoader.load(CacheWriterWrapper.class, one)
+          .using(StringGenerator.integers(), ByteArrayGenerator
+          .fixedSize(128)).sequentially().untilFilled();
+      load.run();
+      Assert.assertTrue(one.getSize() > 0);
+    } finally {
+      manager.shutdown();
+    }
+  }
+
   @Test
   public void testSimplePartitionedLoad() {
     CacheManager manager = new CacheManager(new Configuration().name("testSimplePartitionedLoad").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));

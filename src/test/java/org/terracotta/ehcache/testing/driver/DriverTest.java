@@ -6,6 +6,7 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Test;
+import org.terracotta.ehcache.testing.cache.CacheWrapperImpl;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 

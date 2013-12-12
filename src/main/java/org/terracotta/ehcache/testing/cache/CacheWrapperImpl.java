@@ -10,11 +10,11 @@ import org.terracotta.ehcache.testing.statistics.StatsReporter;
 public class CacheWrapperImpl implements CacheWrapper {
 
 	private static final int KB = 1024;
-	private final Stats readStats, writeStats;
+	private final Stats readStats;
+  protected final Stats writeStats;
 
-	private final Ehcache cache;
-	private boolean statistics = false;
-  private boolean useWithWriter = false;
+	protected final Ehcache cache;
+	protected boolean statistics = false;
 
   /**
 	 * Implementation of {@link CacheWrapper}
@@ -31,11 +31,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 	public void put(Object key, Object value) {
 		long start = (statistics) ? now() : 0;
 		try {
-      if (useWithWriter) {
-        cache.putWithWriter(new Element(key, value));
-      } else {
         cache.put(new Element(key, value));
-      }
     } catch (NonStopCacheException nsce) {
 			writeStats.incrementNonstopExceptionCount();
 		}
@@ -73,7 +69,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 			StatsReporter.getInstance().register(this.cache, this);
 	}
 
-	private static long now() {
+	protected static long now() {
 		return System.currentTimeMillis();
 	}
 
@@ -135,21 +131,12 @@ public class CacheWrapperImpl implements CacheWrapper {
 		}
 	}
 
-	public void remove(Object key) {
-    if (useWithWriter) {
-      cache.removeWithWriter(key);
-    } else {
-      cache.remove(key);
-    }
+  public void remove(Object key) {
+    cache.remove(key);
   }
 
 	public Ehcache getCache() {
 		return cache;
 	}
-
-  @Override
-  public void setUseWithWriter(final boolean enabled) {
-    this.useWithWriter = enabled;
-  }
 
 }
