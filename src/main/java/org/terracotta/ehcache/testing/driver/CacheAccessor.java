@@ -138,6 +138,14 @@ public abstract class CacheAccessor implements CacheDriver {
   public abstract CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation);
 
   /**
+   * Enable performance statistics reporting on console
+   *
+   * @param statistics
+   * @return this
+   */
+  public abstract CacheAccessor enableStatReporting(boolean statistics);
+  
+  /**
    * Enable statistics collection
    *
    * @param statistics
@@ -478,8 +486,13 @@ public abstract class CacheAccessor implements CacheDriver {
 	}
 
 	@Override
-	public CacheAccessor enableStatistics(boolean enabled) {
+	public CacheAccessor enableStatReporting(boolean enabled) {
 		this.statistics = enabled;
+		return this;
+	}
+	
+	@Override
+	public CacheAccessor enableStatistics(boolean enabled) {
 		cacheWrapper.setStatisticsEnabled(enabled);
 		return this;
 	}
@@ -708,10 +721,15 @@ public abstract class CacheAccessor implements CacheDriver {
 		individualCacheAccessor.removeRatio(removeRatio);
 	  return this;
 	}
+	
+	@Override
+	public CacheAccessor enableStatReporting(boolean enabled) {
+		this.statistics = enabled;
+		return this;
+	}
 
 	@Override
 	public CacheAccessor enableStatistics(boolean statistics) {
-		this.statistics = statistics;
 		for (IndividualCacheAccessor accessor : accessors)
 			accessor.enableStatistics(statistics);
 	  return this;

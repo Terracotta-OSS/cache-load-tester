@@ -183,8 +183,12 @@ public class CacheLoader implements CacheDriver {
   public CacheLoader enableStatistics(boolean enabled) {
     for (CacheWrapper cache : caches)
       cache.setStatisticsEnabled(enabled);
-    this.statistics = enabled;
     return this;
+  }
+  
+  public CacheLoader enableStatReporting(boolean enabled) {
+	    this.statistics = enabled;
+	    return this;
   }
 
   public CacheDriver fillPartitioned(long count, int threads) {
