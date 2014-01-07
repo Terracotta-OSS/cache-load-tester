@@ -39,6 +39,7 @@ public class SimpleAccessWithStatsTest {
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.02)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
+        .enableStatReporting(true)
         .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"));
 
     ParallelDriver.inParallel(4, access).run();
@@ -58,7 +59,7 @@ public class SimpleAccessWithStatsTest {
 
     CacheLoader loader = CacheLoader.load(cache1)
            .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
-           .enableStatistics(true).sequentially()
+           .enableStatistics(true).enableStatReporting(true).sequentially()
         .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"))
            .untilFilled();
     ParallelDriver.inParallel(40, loader).run();
@@ -68,6 +69,7 @@ public class SimpleAccessWithStatsTest {
          .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
          .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.2).removeRatio(0.2)
          .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS)).enableStatistics(true)
+         .enableStatReporting(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 
     ParallelDriver.inParallel(40, access).run();
