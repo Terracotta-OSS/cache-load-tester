@@ -21,20 +21,22 @@ public class EqualityValidation implements Validation {
       Object expected = valueGenerator.generate(seed);
       if (value == null) {
         if (expected != null) {
-          throw new AssertionError();
+          throw new AssertionError("Value to be validated is null and validation value is not. " +
+                                   "(seed=[" + seed + "], validation value=[" + expected.toString() + "])");
         }
       } else if (value.getClass().isArray() && expected.getClass().isArray()) {
         if (Array.getLength(expected) != Array.getLength(value)) {
-          throw new AssertionError();
+          throw new AssertionError("Value to be validated is an array and is not of the same size of the validation value.");
         } else {
           for (int i = 0; i < Array.getLength(expected); i++) {
             if (!Array.get(expected, i).equals(Array.get(value, i))) {
-              throw new AssertionError();
+              throw new AssertionError("Value to be validated is an array and is not equal to the validation value.");
             }
           }
         }
       } else if (!expected.equals(value)) {
-        throw new AssertionError();
+        throw new AssertionError("Value to be validated is different from validation value. " +
+                                 "(seed=[" + seed + "], value=["+value.toString()+"], validation value=[" + expected.toString() + "])");
       }
     }
 
