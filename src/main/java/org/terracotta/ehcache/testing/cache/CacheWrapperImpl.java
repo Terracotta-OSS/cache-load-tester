@@ -3,6 +3,7 @@ package org.terracotta.ehcache.testing.cache;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
+import net.sf.ehcache.constructs.nonstop.RejoinCacheException;
 
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsReporter;
@@ -34,6 +35,8 @@ public class CacheWrapperImpl implements CacheWrapper {
         cache.put(new Element(key, value));
     } catch (NonStopCacheException nsce) {
 			writeStats.incrementNonstopExceptionCount();
+		} catch (RejoinCacheException rce){
+			System.out.println("RejoinCacheException:: " + rce.getStackTrace());
 		}
 		long end = (statistics) ? now() : 0;
 		if (statistics) {
@@ -55,7 +58,10 @@ public class CacheWrapperImpl implements CacheWrapper {
 			return e.getObjectValue();
 		} catch (NonStopCacheException nsce) {
 			readStats.incrementNonstopExceptionCount();
+		} catch (RejoinCacheException rce){
+			System.out.println("RejoinCacheException:: " + rce.getStackTrace());
 		}
+		
 		return null;
 	}
 
@@ -104,6 +110,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 			return -1;
 		} catch (UnsupportedOperationException e) {
 			return -1;
+		} catch (RejoinCacheException rce){
+			return -1;
 		}
 	}
 
@@ -116,6 +124,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 	         return -1;
 		} catch (NoSuchMethodError e) {
 			return -1;
+		} catch (RejoinCacheException rce){
+			return -1;
 		}
 	}
 
@@ -127,6 +137,8 @@ public class CacheWrapperImpl implements CacheWrapper {
         } catch (NonStopCacheException nsce) {
             return -1;
 		} catch (UnsupportedOperationException e) {
+			return -1;
+		} catch (RejoinCacheException rce){
 			return -1;
 		}
 	}
