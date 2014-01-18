@@ -1,6 +1,7 @@
 package org.terracotta.ehcache.testing.cache;
 
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 import net.sf.ehcache.store.MemoryStore;
 import net.sf.ehcache.store.disk.DiskStore;
 
@@ -11,91 +12,110 @@ import org.terracotta.ehcache.testing.statistics.Stats;
  * operations.
  *
  * @author Himadri Singh
- *
+ * @author Sanjay Bansal
  */
 public interface CacheWrapper {
 
-	/**
-	 * Get the value for the key
-	 * @param key
-	 * @return value
-	 */
-	public Object get(Object key);
+  /**
+   * Get the value for the key
+   *
+   * @param key
+   * @return value
+   */
+  public Object get(Object key);
 
-	/**
-	 * Stores key-value pair in the cache
-	 * @param key
-	 * @param value
-	 */
-	public void put(Object key, Object value);
+  /**
+   * Stores key-value pair in the cache
+   *
+   * @param key
+   * @param value
+   */
+  public void put(Object key, Object value);
 
-	/**
-	 * Remove key from the cache
-	 *
-	 * @param key
-	 */
-	public void remove(Object key);
+  /**
+   * Put if key is absent
+   *
+   * @param key
+   * @param value
+   * @return value
+   */
+  public Object putIfAbsent(Object key, Object value);
 
-	/**
-	 * Get the name of the underlying cache.
-	 *
-	 * @return name of the cache
-	 */
-	public String getName();
+  /**
+   * Remove key from the cache
+   *
+   * @param key
+   */
+  public void remove(Object key);
 
-	/**
-	 * Get the size of the cache
-	 * @return cache size
-	 */
-	public Long getSize();
+  /**
+   * Get the name of the underlying cache.
+   *
+   * @return name of the cache
+   */
+  public String getName();
 
-	/**
-	 * enables statistics collection
-	 * default: false
-	 * @param enabled
-	 */
-	public void setStatisticsEnabled(boolean enabled);
+  /**
+   * Get the size of the cache
+   *
+   * @return cache size
+   */
+  public Long getSize();
 
-	/**
-	 * get @Stats for read operations
-	 * @return read stats
-	 */
-	public Stats getReadStats();
+  /**
+   * enables statistics collection
+   * default: false
+   *
+   * @param enabled
+   */
+  public void setStatisticsEnabled(boolean enabled);
 
-	/**
-	 * get @Stats for write operations
-	 * @return write stats
-	 */
-	public Stats getWriteStats();
+  /**
+   * get @Stats for read operations
+   *
+   * @return read stats
+   */
+  public Stats getReadStats();
 
-	/**
-	 * Resets read/write stats
-	 * Useful if running test in phases
-	 */
-	public void resetStats();
+  /**
+   * get @Stats for write operations
+   *
+   * @return write stats
+   */
+  public Stats getWriteStats();
 
-	/**
-	 * gets the {@link OffHeapStore} in KB
-	 * @return offheap in MB
-	 */
-	public long getOffHeapSize();
+  /**
+   * Resets read/write stats
+   * Useful if running test in phases
+   */
+  public void resetStats();
 
-	/**
-	 * gets the {@link MemoryStore} size in KB
-	 * @return size in MB
-	 */
-	public long getOnHeapSize();
+  /**
+   * gets the {@link OffHeapStore} in KB
+   *
+   * @return offheap in MB
+   */
+  public long getOffHeapSize();
 
-	/**
-	 * get the {@link DiskStore} size in KB
-	 * @return
-	 */
-	public long getOnDiskSize();
+  /**
+   * gets the {@link MemoryStore} size in KB
+   *
+   * @return size in MB
+   */
+  public long getOnHeapSize();
 
-	/**
-	 * get the cache
-	 * @return
-	 */
-	public Ehcache getCache();
+  /**
+   * get the {@link DiskStore} size in KB
+   *
+   * @return
+   */
+  public long getOnDiskSize();
+
+  /**
+   * get the cache
+   *
+   * @return
+   */
+  public Ehcache getCache();
 
 }

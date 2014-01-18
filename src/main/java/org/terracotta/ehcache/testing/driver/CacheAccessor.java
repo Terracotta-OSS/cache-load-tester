@@ -1,18 +1,6 @@
 package org.terracotta.ehcache.testing.driver;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import net.sf.ehcache.Ehcache;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
@@ -35,6 +23,18 @@ import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 import org.terracotta.ehcache.testing.validator.EqualityValidation;
 import org.terracotta.ehcache.testing.validator.Validation;
 import org.terracotta.ehcache.testing.validator.Validation.Validator;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class CacheAccessor implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheAccessor.class);
@@ -155,25 +155,32 @@ public abstract class CacheAccessor implements CacheDriver {
   public abstract CacheAccessor accessPattern(Pattern pattern, int duration, int interval);
 
   /**
-   * Sets update ratio.
-   *
-   * 0.0 = Readonly
-   * 1.0 = 100% Updates
+   * Set a ratio for each operation
+   * @param percentage ratio between 0.0 - 1.0
+   * @return this
+   */
+  public abstract CacheAccessor update(double percentage);
+  public abstract CacheAccessor remove(double percentage);
+  public abstract CacheAccessor get(double percentage);
+  public abstract CacheAccessor put(double percentage);
+  public abstract CacheAccessor putIfAbsent(double percentage);
+
+  /**
+   * @deprecated use update(updateRatio) to set update ratio.
    *
    * @param updateRatio value between 0.0 - 1.0
    * @return
    */
+  @Deprecated
   public abstract CacheAccessor updateRatio(double updateRatio);
 
   /**
-   * Sets remove ratio.
-   *
-   * 0.0 = No Removes
-   * 1.0 = 100% Removes
+   * @deprecated use remove(removeRatio) to set remove ratio.
    *
    * @param removeRatio value between 0.0 - 1.0
    * @return
    */
+  @Deprecated
   public abstract CacheAccessor removeRatio(double removeRatio);
 
   protected abstract void execute();
@@ -185,7 +192,7 @@ public abstract class CacheAccessor implements CacheDriver {
   }
 
   /**
-   * Use addLogger instead
+   * @deprecated Use addLogger instead
    * @param loggers
    * @return CacheAccessor
    */
@@ -228,8 +235,14 @@ public abstract class CacheAccessor implements CacheDriver {
 
 	private final CacheWrapper cacheWrapper;
     private int weight = 1;
-    private double updateRatio = 0.0;
-    private double removeRatio = 0.0;
+
+    private final String UPDATE_RATIO = "update";
+    private final String REMOVE_RATIO = "remove";
+    private final String GET_RATIO = "get";
+    private final String PUT_RATIO = "put";
+    private final String PUTIFABSENT_RATIO = "putIfAbsent";
+    private Map<String, Double> ratios = new ConcurrentHashMap<String, Double>();
+
     private final AtomicLong delayInMicros = new AtomicLong();
 
     private ObjectGenerator keyGenerator;
@@ -244,6 +257,23 @@ public abstract class CacheAccessor implements CacheDriver {
 
     public IndividualCacheAccessor(Ehcache cache) {
       this.cacheWrapper = new CacheWrapperImpl(cache);
+
+      this.ratios.put(REMOVE_RATIO, 0.0);
+      this.ratios.put(UPDATE_RATIO, 0.0);
+      this.ratios.put(GET_RATIO, 0.0);
+      this.ratios.put(PUT_RATIO, 0.0);
+      this.ratios.put(PUTIFABSENT_RATIO, 0.0);
+    }
+
+    @Override
+    public void run() {
+      if (this.ratios.get(REMOVE_RATIO) == 0.0 && this.ratios.get(UPDATE_RATIO) == 0.0
+          && this.ratios.get(GET_RATIO) == 0.0 && this.ratios.get(PUT_RATIO) == 0.0
+          && this.ratios.get(PUTIFABSENT_RATIO) == 0.0) {
+        this.ratios.put(GET_RATIO, 1.0);
+      }
+      logger.info("-- CacheAccessor operations percentage: {}", ratios.toString());
+      super.run();
     }
 
     @Override
@@ -310,13 +340,23 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     private void updateOnce(long seed) {
-        Object key = keyGenerator.generate(seed);
-    	cacheWrapper.put(key, valueGenerator.generate(seed));
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.put(key, valueGenerator.generate(seed));
     }
 
     private void removeOnce(long seed) {
-        Object key = keyGenerator.generate(seed);
-    	cacheWrapper.remove(key);
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.remove(key);
+    }
+
+    private void putOnce(long seed) {
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.put(key, valueGenerator.generate(seed));
+    }
+
+    private void putIfAbsentOnce(long seed) {
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.putIfAbsent(key, valueGenerator.generate(seed));
     }
 
     /**
@@ -327,22 +367,37 @@ public abstract class CacheAccessor implements CacheDriver {
      * {@link #removeRatio} - 1.0 : {@link OPERATION#GET} <br/>
      * @return {@link OPERATION}
      */
-    private OPERATION getNextOperation(){
-    	double d = rnd.nextDouble();
-    	if (d <= updateRatio)
-    		return OPERATION.UPDATE;
-    	else if (d > updateRatio && d <= (updateRatio + removeRatio))
-    		return OPERATION.REMOVE;
-    	else {
-        if (Validation.Mode.STRICT.equals(this.validationMode))
-      		return OPERATION.STRICT_GET;
-        else
-      		return OPERATION.GET;
-      }
+    private OPERATION getNextOperation() {
+      double d = rnd.nextDouble();
+
+      double min = 0;
+      double max = this.ratios.get(UPDATE_RATIO);
+      if (d <= max)
+        return OPERATION.UPDATE;
+
+      min = max;
+      max = min + this.ratios.get(REMOVE_RATIO);
+      if (d > min && d <= max)
+        return OPERATION.REMOVE;
+
+      min = max;
+      max = min + this.ratios.get(PUT_RATIO);
+      if (d > min && d <= max)
+        return OPERATION.PUT;
+
+      min = max;
+      max = min + this.ratios.get(PUTIFABSENT_RATIO);
+      if (d > min && d <= max)
+        return OPERATION.PUTIFABSENT;
+
+      if (Validation.Mode.STRICT.equals(this.validationMode))
+        return OPERATION.STRICT_GET;
+      else
+        return OPERATION.GET;
     }
 
     enum OPERATION {
-      STRICT_GET, GET, UPDATE, REMOVE;
+      STRICT_GET, GET, UPDATE, REMOVE, PUT, PUTIFABSENT;
     }
 
     /**
@@ -351,31 +406,37 @@ public abstract class CacheAccessor implements CacheDriver {
      * @param seed
      * @param validator
      */
-    public void runOnce(long seed, Validator validator){
-		try {
-		  TimeUnit.MICROSECONDS.sleep(delayInMicros.get());
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-   	  switch (getNextOperation()){
-   	  	case STRICT_GET:
-   	  		getStrictOnce(seed, validator);
-   	  		break;
-   	  	case GET:
-   	  		getOnce(seed, validator);
-   	  		break;
-   	  	case UPDATE:
-   	  		updateOnce(seed);
-   	  		break;
-   	  	case REMOVE:
-   	  		removeOnce(seed);
-   	  		break;
-   	  }
+    public void runOnce(long seed, Validator validator) {
+      try {
+        TimeUnit.MICROSECONDS.sleep(delayInMicros.get());
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      switch (getNextOperation()) {
+        case STRICT_GET:
+          getStrictOnce(seed, validator);
+          break;
+        case GET:
+          getOnce(seed, validator);
+          break;
+        case UPDATE:
+          updateOnce(seed);
+          break;
+        case REMOVE:
+          removeOnce(seed);
+          break;
+        case PUT:
+          putOnce(seed);
+          break;
+        case PUTIFABSENT:
+          putIfAbsentOnce(seed);
+          break;
+      }
     }
 
     /**
 	 * Executes the test. Starts {@link StatsReporter} thread and executes
-	 * {@link #runOnce(int, Validator)} till {@link TerminationCondition} is
+	 * {@link #runOnce(long, Validator)} till {@link TerminationCondition} is
 	 * met. Stops reporter thread.
 	 */
 	@Override
@@ -394,7 +455,7 @@ public abstract class CacheAccessor implements CacheDriver {
         runOnce(seeds.next(), validator);
       } while (!termination.isMet());
       long stop = now();
-      logger.debug("CacheAccessor put/get/validate on caches took: {}ms", stop - start);
+      logger.debug("CacheAccessor operations on caches took: {}ms", stop - start);
     }
 
     @Override
@@ -467,13 +528,13 @@ public abstract class CacheAccessor implements CacheDriver {
 
 	@Override
 	public CacheAccessor updateRatio(double updateRatio) {
-		this.updateRatio = updateRatio;
+		this.ratios.put(UPDATE_RATIO, updateRatio);
 		return this;
 	}
 
 	@Override
 	public CacheAccessor removeRatio(double removeRatio) {
-		this.removeRatio = removeRatio;
+    this.ratios.put(REMOVE_RATIO, removeRatio);
 		return this;
 	}
 
@@ -490,14 +551,44 @@ public abstract class CacheAccessor implements CacheDriver {
 		throw new IllegalStateException("AccessPattern is not allowed for IndividualCacheAccessor");
 	}
 
-	@Override
-	public	CacheAccessor addThinkTime(long micros) {
-		logger.debug("Delay set to : " + micros);
-		this.delayInMicros.set(micros);
-		return this;
-	}
+    @Override
+    public CacheAccessor update(final double percentage) {
+      this.ratios.put(UPDATE_RATIO, percentage);
+      return this;
+    }
 
-}
+    @Override
+    public CacheAccessor remove(final double percentage) {
+      this.ratios.put(REMOVE_RATIO, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor get(final double percentage) {
+      this.ratios.put(GET_RATIO, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor put(final double percentage) {
+      this.ratios.put(PUT_RATIO, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor putIfAbsent(final double percentage) {
+      this.ratios.put(PUTIFABSENT_RATIO, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor addThinkTime(long micros) {
+      logger.debug("Delay set to : " + micros);
+      this.delayInMicros.set(micros);
+      return this;
+    }
+
+  }
 
   static class MultipleCacheAccessor extends CacheAccessor {
 
@@ -695,19 +786,21 @@ public abstract class CacheAccessor implements CacheDriver {
       return this;
     }
 
-	@Override
-	public CacheAccessor updateRatio(double updateRatio) {
-	  for (IndividualCacheAccessor individualCacheAccessor : accessors)
-		individualCacheAccessor.updateRatio(updateRatio);
-	  return this;
-	}
+    @Override
+    @Deprecated
+    public CacheAccessor updateRatio(double updateRatio) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.updateRatio(updateRatio);
+      return this;
+    }
 
-	@Override
-	public CacheAccessor removeRatio(double removeRatio) {
-	  for (IndividualCacheAccessor individualCacheAccessor : accessors)
-		individualCacheAccessor.removeRatio(removeRatio);
-	  return this;
-	}
+    @Override
+    @Deprecated
+    public CacheAccessor removeRatio(double removeRatio) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.removeRatio(removeRatio);
+      return this;
+    }
 
 	@Override
 	public CacheAccessor enableStatistics(boolean statistics) {
@@ -725,13 +818,47 @@ public abstract class CacheAccessor implements CacheDriver {
 		return this;
 	}
 
-	@Override
-	public CacheAccessor addThinkTime(long micros) {
-		for (IndividualCacheAccessor accessor : accessors)
-			accessor.addThinkTime(micros);
-		return this;
-	}
+    @Override
+    public CacheAccessor update(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.update(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor remove(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.remove(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor get(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.get(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor put(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.put(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor putIfAbsent(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.putIfAbsent(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor addThinkTime(long micros) {
+      for (IndividualCacheAccessor accessor : accessors)
+        accessor.addThinkTime(micros);
+      return this;
+    }
 
   }
-
- }
+}

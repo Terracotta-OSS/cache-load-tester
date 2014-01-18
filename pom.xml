@@ -27,8 +27,8 @@
 
   <properties>
     <ehcache.test.version>${project.version}</ehcache.test.version>
-    <ehcache.version>2.9.0-SNAPSHOT</ehcache.version>
-    <terracotta.version>4.0.0</terracotta.version>
+    <ehcache.version>2.8.0</ehcache.version>
+    <terracotta.version>4.1.0</terracotta.version>
   </properties>
 
   <dependencies>

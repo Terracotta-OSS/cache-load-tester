@@ -20,8 +20,7 @@ public class CacheWrapperImpl implements CacheWrapper {
   /**
 	 * Implementation of {@link CacheWrapper}
 	 *
-	 * @param cache
-	 *            the underlying Ehcache
+	 * @param cache the underlying Ehcache
 	 */
 	public CacheWrapperImpl(final Ehcache cache) {
 		this.cache = cache;
@@ -42,6 +41,23 @@ public class CacheWrapperImpl implements CacheWrapper {
 		if (statistics) {
 			writeStats.add(end - start);
 		}
+	}
+
+	public Object putIfAbsent(Object key, Object value) {
+		long start = (statistics) ? now() : 0;
+		Element element = null;
+		try {
+        element = cache.putIfAbsent(new Element(key, value));
+		} catch (NonStopCacheException nsce) {
+			writeStats.incrementNonstopExceptionCount();
+		} catch (RejoinCacheException rce){
+      System.out.println("RejoinCacheException:: " + rce.getStackTrace());
+    }
+		long end = (statistics) ? now() : 0;
+		if (statistics) {
+			writeStats.add(end - start);
+		}
+		return element;
 	}
 
 	public Object get(Object key) {

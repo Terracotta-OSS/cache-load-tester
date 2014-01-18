@@ -39,7 +39,7 @@ public class StatsReporterTest {
         .using(StringGenerator.integers(),
             ByteArrayGenerator.randomSize(300, 1200))
         .enableStatistics(true).sequentially().iterate(10000)
-        .logUsing(new ConsoleStatsLoggerImpl());
+        .addLogger(new ConsoleStatsLoggerImpl());
 
     CacheDriver driver = ParallelDriver.inParallel(40, loader);
     driver.run();
@@ -68,7 +68,7 @@ public class StatsReporterTest {
         .using(StringGenerator.integers(),
             ByteArrayGenerator.randomSize(300, 1200))
         .enableStatistics(true).sequentially().iterate(10000)
-        .logUsing(new ConsoleStatsLoggerImpl());
+        .addLogger(new ConsoleStatsLoggerImpl());
     loader.run();
     Assert.assertEquals(10000, cache1.getSize());
     Assert.assertEquals(10000, cache2.getSize());

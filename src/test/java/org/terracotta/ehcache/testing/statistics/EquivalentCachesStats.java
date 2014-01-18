@@ -89,8 +89,7 @@ public class EquivalentCachesStats {
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).updateRatio(0.1)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS))
-        .addLogger(new ConsoleStatsLoggerImpl())
-        ;
+        .addLogger(new ConsoleStatsLoggerImpl());
 
     ParallelDriver.inParallel(4, access).run();
 
