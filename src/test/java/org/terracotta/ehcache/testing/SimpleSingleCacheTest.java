@@ -73,9 +73,8 @@ public class SimpleSingleCacheTest {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver partitionedLoad = CacheLoader.load(one)
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
-          .enableStatistics(true).logUsing(new ConsoleStatsLoggerImpl())
-          .sequentially().untilFilled().partition(4)
-          ;
+          .enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl())
+          .sequentially().untilFilled().partition(4);
       partitionedLoad.run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {

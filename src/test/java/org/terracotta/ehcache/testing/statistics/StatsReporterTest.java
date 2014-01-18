@@ -78,7 +78,7 @@ public class StatsReporterTest {
         .using(StringGenerator.integers(),
             ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
-        .updateRatio(0.2)
+        .update(0.2)
         .terminateOn(
             new TimedTerminationCondition(30, TimeUnit.SECONDS))
 				.enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl());
@@ -122,7 +122,7 @@ public class StatsReporterTest {
         .using(StringGenerator.integers(),
             ByteArrayGenerator.randomSize(300, 1200))
         .enableStatistics(true).sequentially().iterate(10000)
-        .logUsing(new ConsoleStatsLoggerImpl());
+        .addLogger(new ConsoleStatsLoggerImpl());
     loader.run();
     Assert.assertEquals(10000, cache1.getSize());
     Assert.assertEquals(10000, cache2.getSize());
@@ -133,11 +133,11 @@ public class StatsReporterTest {
           .using(StringGenerator.integers(),
               ByteArrayGenerator.randomSize(300, 1200))
           .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
-          .updateRatio(0.2)
+          .update(0.2)
           .terminateOn(
               new TimedTerminationCondition(10, TimeUnit.SECONDS))
 					.enableStatistics(true)
-          .logUsing(new ConsoleStatsLoggerImpl());
+          .addLogger(new ConsoleStatsLoggerImpl());
 
       CacheDriver driver = ParallelDriver.inParallel(10, access);
       driver.run();

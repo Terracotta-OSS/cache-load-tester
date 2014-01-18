@@ -4,6 +4,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.sf.ehcache.Ehcache;
 
@@ -29,6 +32,9 @@ public class CacheLoader implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheLoader.class);
 
   private final Collection<CacheWrapper> caches;
+
+  private Map<OPERATION, Double> ratios = new ConcurrentHashMap<OPERATION, Double>();
+  private final Random rnd = new Random();
 
   private boolean statistics = false;
   private SequenceGenerator sequenceGenerator = null;
@@ -87,13 +93,23 @@ public class CacheLoader implements CacheDriver {
     return new ParallelDriver(drivers);
   }
 
+  public CacheLoader put(final double percentage) {
+    this.ratios.put(OPERATION.PUT, percentage);
+    return this;
+  }
+
+  public CacheLoader putIfAbsent(final double percentage) {
+    this.ratios.put(OPERATION.PUTIFABSENT, percentage);
+    return this;
+  }
+
   /**
-   * Sets @ObjectGenerators for keys and values.
-   *
-   * @param keys
-   * @param values
-   * @return this
-   */
+     * Sets @ObjectGenerators for keys and values.
+     *
+     * @param keys
+     * @param values
+     * @return this
+     */
   public CacheLoader using(ObjectGenerator keys, ObjectGenerator values) {
     if (keyGenerator == null) {
       keyGenerator = keys;
@@ -161,16 +177,21 @@ public class CacheLoader implements CacheDriver {
 
   public void run() {
     Sequence seeds = sequenceGenerator.createSequence();
-    Condition termination = terminationCondition.createCondition(caches
-        .toArray(new CacheWrapper[caches.size()]));
+    Condition termination = terminationCondition.createCondition(caches.toArray(new CacheWrapper[caches.size()]));
     if (statistics)
       reporter.startReporting();
     long start = System.currentTimeMillis();
     do {
       long seed = seeds.next();
       for (CacheWrapper cache : caches) {
-        cache.put(keyGenerator.generate(seed), valueGenerator
-            .generate(seed));
+        switch (getNextOperation()) {
+          case PUT:
+            cache.put(keyGenerator.generate(seed), valueGenerator.generate(seed));
+            break;
+          case PUTIFABSENT:
+            cache.putIfAbsent(keyGenerator.generate(seed), valueGenerator.generate(seed));
+            break;
+        }
       }
     } while (!termination.isMet());
     long stop = System.currentTimeMillis();
@@ -197,5 +218,16 @@ public class CacheLoader implements CacheDriver {
 
   public StatsNode getFinalStatsNode() {
     return reporter.getFinalStats();
+  }
+
+  private OPERATION getNextOperation() {
+    double d = rnd.nextDouble();
+
+    double min = 0;
+    double max = this.ratios.get(OPERATION.PUTIFABSENT);
+    if (d <= max)
+      return OPERATION.PUTIFABSENT;
+
+    return OPERATION.PUT;
   }
 }

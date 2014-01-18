@@ -87,7 +87,7 @@ public class EquivalentCachesStats {
     CacheAccessor access = CacheAccessor.access(cache)
         .enableStatistics(true)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
-        .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).updateRatio(0.1)
+        .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).update(0.1)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS))
         .addLogger(new ConsoleStatsLoggerImpl());
 

@@ -37,7 +37,7 @@ public class ParallelDriverStatsTest {
 				.using(StringGenerator.integers(),
 						ByteArrayGenerator.fixedSize(10))
 				.enableStatistics(true).sequentially().iterate(size)
-				.logUsing(new ConsoleStatsLoggerImpl());
+				.addLogger(new ConsoleStatsLoggerImpl());
 		loader.run();
 		loader.getFinalStats();
 		Assert.assertEquals(size, cache1.getSize());
@@ -54,7 +54,7 @@ public class ParallelDriverStatsTest {
 					.sequentially(i * perThread)
 					.terminateOn(new IterationTerminationCondition(perThread))
 					.enableStatistics(true)
-					.logUsing(new ConsoleStatsLoggerImpl());
+					.addLogger(new ConsoleStatsLoggerImpl());
 		}
 		CacheDriver driver = ParallelDriver.inParallel(accessors);
 		driver.run();
@@ -83,7 +83,7 @@ public class ParallelDriverStatsTest {
 				.using(StringGenerator.integers(),
 						ByteArrayGenerator.fixedSize(10))
 				.enableStatistics(true).sequentially().iterate(size)
-				.logUsing(new ConsoleStatsLoggerImpl());
+				.addLogger(new ConsoleStatsLoggerImpl());
 		loader.run();
 		Assert.assertEquals(size, cache1.getSize());
 
@@ -98,7 +98,7 @@ public class ParallelDriverStatsTest {
 					.sequentially(i * perThread)
 					.terminateOn(new IterationTerminationCondition(perThread))
 					.enableStatistics(true)
-					.logUsing(new ConsoleStatsLoggerImpl());
+					.addLogger(new ConsoleStatsLoggerImpl());
 		}
 		CacheDriver driver = ParallelDriver.inParallel(accessors);
 		driver.run();

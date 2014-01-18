@@ -37,7 +37,7 @@ public class SimpleAccessWithStatsTest {
 
     CacheAccessor access = CacheAccessor.access(cache1, cache2)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
-        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.02)
+        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.02)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
         .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"));
 
@@ -66,7 +66,7 @@ public class SimpleAccessWithStatsTest {
 
     CacheAccessor access = CacheAccessor.access(cache1)
          .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
-         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.2).removeRatio(0.2)
+         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2)
          .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS)).enableStatistics(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 
