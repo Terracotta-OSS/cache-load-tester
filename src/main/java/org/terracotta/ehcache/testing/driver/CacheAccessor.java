@@ -267,7 +267,12 @@ public abstract class CacheAccessor implements CacheDriver {
           && this.ratios.get(OPERATION.PUTIFABSENT) == 0.0) {
         this.ratios.put(OPERATION.GET, 1.0);
       }
-      logger.info("-- CacheAccessor operations percentage: {}", ratios.toString());
+      logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
+      if ((this.ratios.get(OPERATION.REMOVE) + this.ratios.get(OPERATION.UPDATE)
+           + this.ratios.get(OPERATION.GET) + this.ratios.get(OPERATION.PUT) +
+           this.ratios.get(OPERATION.PUTIFABSENT)) > 1.0) {
+        throw new RuntimeException("Sums of ratios (remove, update, get, put and putIfAbsent) is higher than 100%");
+      }
       super.run();
     }
 

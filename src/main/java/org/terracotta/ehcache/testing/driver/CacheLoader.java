@@ -179,6 +179,15 @@ public class CacheLoader implements CacheDriver {
   }
 
   public void run() {
+    if (this.ratios.get(OPERATION.PUT) == 0.0
+        && this.ratios.get(OPERATION.PUTIFABSENT) == 0.0) {
+      this.ratios.put(OPERATION.GET, 1.0);
+    }
+    if ((this.ratios.get(OPERATION.PUT) + this.ratios.get(OPERATION.PUTIFABSENT)) > 1.0) {
+      throw new RuntimeException("Sums of ratios (put and putIfAbsent) is higher than 100%");
+    }
+    logger.info("-- CacheAccessor operations percentage: {}", ratios.toString());
+
     Sequence seeds = sequenceGenerator.createSequence();
     Condition termination = terminationCondition.createCondition(caches.toArray(new CacheWrapper[caches.size()]));
     if (statistics)
