@@ -26,7 +26,7 @@ public class ValidatingCacheTest {
 
   @Test(expected = AssertionError.class)
   public void testEmptyCacheValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testEmptyCacheValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver access = CacheAccessor.access(one).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(10, TimeUnit.SECONDS);
@@ -53,7 +53,7 @@ public class ValidatingCacheTest {
 
   @Test
   public void testEqualsObjectValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration().name("default")));
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsObjectValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration().name("default")));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver load = CacheLoader.load(one).using(StringGenerator.integers(),
@@ -81,7 +81,7 @@ public class ValidatingCacheTest {
 
   @Test(expected = AssertionError.class)
   public void testNotEqualsObjectValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testNotEqualsObjectValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver load = CacheLoader.load(one).using(StringGenerator.integers(),
