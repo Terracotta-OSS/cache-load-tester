@@ -36,6 +36,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.GET;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUTIFABSENT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REMOVE;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.UPDATE;
+
 public abstract class CacheAccessor implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheAccessor.class);
   private final StatsReporter reporter = StatsReporter.getInstance();
@@ -253,24 +259,24 @@ public abstract class CacheAccessor implements CacheDriver {
     public IndividualCacheAccessor(Ehcache cache) {
       this.cacheWrapper = new CacheWrapperImpl(cache);
 
-      this.ratios.put(OPERATION.REMOVE, 0.0);
-      this.ratios.put(OPERATION.UPDATE, 0.0);
-      this.ratios.put(OPERATION.GET, 0.0);
-      this.ratios.put(OPERATION.PUT, 0.0);
-      this.ratios.put(OPERATION.PUTIFABSENT, 0.0);
+      this.ratios.put(REMOVE, 0.0);
+      this.ratios.put(UPDATE, 0.0);
+      this.ratios.put(GET, 0.0);
+      this.ratios.put(PUT, 0.0);
+      this.ratios.put(PUTIFABSENT, 0.0);
     }
 
     @Override
     public void run() {
-      if (this.ratios.get(OPERATION.REMOVE) == 0.0 && this.ratios.get(OPERATION.UPDATE) == 0.0
-          && this.ratios.get(OPERATION.GET) == 0.0 && this.ratios.get(OPERATION.PUT) == 0.0
-          && this.ratios.get(OPERATION.PUTIFABSENT) == 0.0) {
-        this.ratios.put(OPERATION.GET, 1.0);
+      if (this.ratios.get(REMOVE) == 0.0 && this.ratios.get(UPDATE) == 0.0
+          && this.ratios.get(GET) == 0.0 && this.ratios.get(PUT) == 0.0
+          && this.ratios.get(PUTIFABSENT) == 0.0) {
+        this.ratios.put(GET, 1.0);
       }
       logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
-      if ((this.ratios.get(OPERATION.REMOVE) + this.ratios.get(OPERATION.UPDATE)
-           + this.ratios.get(OPERATION.GET) + this.ratios.get(OPERATION.PUT) +
-           this.ratios.get(OPERATION.PUTIFABSENT)) > 1.0) {
+      if ((this.ratios.get(REMOVE) + this.ratios.get(UPDATE)
+           + this.ratios.get(GET) + this.ratios.get(PUT) +
+           this.ratios.get(PUTIFABSENT)) > 1.0) {
         throw new RuntimeException("Sums of ratios (remove, update, get, put and putIfAbsent) is higher than 100%");
       }
       super.run();
@@ -371,29 +377,29 @@ public abstract class CacheAccessor implements CacheDriver {
       double d = rnd.nextDouble();
 
       double min = 0;
-      double max = this.ratios.get(OPERATION.UPDATE);
+      double max = this.ratios.get(UPDATE);
       if (d <= max)
-        return OPERATION.UPDATE;
+        return UPDATE;
 
       min = max;
-      max = min + this.ratios.get(OPERATION.REMOVE);
+      max = min + this.ratios.get(REMOVE);
       if (d > min && d <= max)
-        return OPERATION.REMOVE;
+        return REMOVE;
 
       min = max;
-      max = min + this.ratios.get(OPERATION.PUT);
+      max = min + this.ratios.get(PUT);
       if (d > min && d <= max)
-        return OPERATION.PUT;
+        return PUT;
 
       min = max;
-      max = min + this.ratios.get(OPERATION.PUTIFABSENT);
+      max = min + this.ratios.get(PUTIFABSENT);
       if (d > min && d <= max)
-        return OPERATION.PUTIFABSENT;
+        return PUTIFABSENT;
 
       if (Validation.Mode.STRICT.equals(this.validationMode))
         return OPERATION.STRICT_GET;
       else
-        return OPERATION.GET;
+        return GET;
     }
 
     /**
@@ -524,13 +530,13 @@ public abstract class CacheAccessor implements CacheDriver {
 
 	@Override
 	public CacheAccessor updateRatio(double updateRatio) {
-		this.ratios.put(OPERATION.UPDATE, updateRatio);
+		this.ratios.put(UPDATE, updateRatio);
 		return this;
 	}
 
 	@Override
 	public CacheAccessor removeRatio(double removeRatio) {
-    this.ratios.put(OPERATION.REMOVE, removeRatio);
+    this.ratios.put(REMOVE, removeRatio);
 		return this;
 	}
 
@@ -549,31 +555,31 @@ public abstract class CacheAccessor implements CacheDriver {
 
     @Override
     public CacheAccessor update(final double percentage) {
-      this.ratios.put(OPERATION.UPDATE, percentage);
+      this.ratios.put(UPDATE, percentage);
       return this;
     }
 
     @Override
     public CacheAccessor remove(final double percentage) {
-      this.ratios.put(OPERATION.REMOVE, percentage);
+      this.ratios.put(REMOVE, percentage);
       return this;
     }
 
     @Override
     public CacheAccessor get(final double percentage) {
-      this.ratios.put(OPERATION.GET, percentage);
+      this.ratios.put(GET, percentage);
       return this;
     }
 
     @Override
     public CacheAccessor put(final double percentage) {
-      this.ratios.put(OPERATION.PUT, percentage);
+      this.ratios.put(PUT, percentage);
       return this;
     }
 
     @Override
     public CacheAccessor putIfAbsent(final double percentage) {
-      this.ratios.put(OPERATION.PUTIFABSENT, percentage);
+      this.ratios.put(PUTIFABSENT, percentage);
       return this;
     }
 

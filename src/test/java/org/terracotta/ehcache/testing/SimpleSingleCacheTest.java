@@ -1,17 +1,11 @@
 package org.terracotta.ehcache.testing;
 
-import java.util.concurrent.TimeUnit;
-
-import junit.framework.Assert;
-
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-
 import org.junit.Test;
-
 import org.terracotta.ehcache.testing.cache.CacheWrapperImpl;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
@@ -21,6 +15,10 @@ import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
+
+import java.util.concurrent.TimeUnit;
+
+import junit.framework.Assert;
 
 public class SimpleSingleCacheTest {
 

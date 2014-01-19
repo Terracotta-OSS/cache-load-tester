@@ -1,15 +1,6 @@
 package org.terracotta.ehcache.testing.driver;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-
 import net.sf.ehcache.Ehcache;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.cache.CacheWrapper;
@@ -28,6 +19,16 @@ import org.terracotta.ehcache.testing.termination.IterationTerminationCondition;
 import org.terracotta.ehcache.testing.termination.TerminationCondition;
 import org.terracotta.ehcache.testing.termination.TerminationCondition.Condition;
 
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUTIFABSENT;
+
 public class CacheLoader implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheLoader.class);
 
@@ -44,8 +45,8 @@ public class CacheLoader implements CacheDriver {
   private final StatsReporter reporter = StatsReporter.getInstance();
 
   private CacheLoader(final Class<? extends CacheWrapper> cacheWrapperClass, Ehcache[] caches) throws RuntimeException {
-    this.ratios.put(OPERATION.PUT, 0.0);
-    this.ratios.put(OPERATION.PUTIFABSENT, 0.0);
+    this.ratios.put(PUT, 0.0);
+    this.ratios.put(PUTIFABSENT, 0.0);
 
     try {
       this.caches = new ArrayList<CacheWrapper>();
@@ -60,6 +61,9 @@ public class CacheLoader implements CacheDriver {
   }
 
   private CacheLoader(CacheLoader loader, SequenceGenerator sequenceGenerator) {
+    this.ratios.put(PUT, 0.0);
+    this.ratios.put(PUTIFABSENT, 0.0);
+
     this.caches = loader.caches;
     this.keyGenerator = loader.keyGenerator;
     this.valueGenerator = loader.valueGenerator;
@@ -90,19 +94,18 @@ public class CacheLoader implements CacheDriver {
     }
     Collection<CacheDriver> drivers = new ArrayList<CacheDriver>(count);
     for (int i = 0; i < count; i++) {
-      drivers.add(new CacheLoader(this,
-          new PartitionedSequentialGenerator(offset + i, count)));
+      drivers.add(new CacheLoader(this, new PartitionedSequentialGenerator(offset + i, count)));
     }
     return new ParallelDriver(drivers);
   }
 
   public CacheLoader put(final double percentage) {
-    this.ratios.put(OPERATION.PUT, percentage);
+    this.ratios.put(PUT, percentage);
     return this;
   }
 
   public CacheLoader putIfAbsent(final double percentage) {
-    this.ratios.put(OPERATION.PUTIFABSENT, percentage);
+    this.ratios.put(PUTIFABSENT, percentage);
     return this;
   }
 
@@ -179,11 +182,10 @@ public class CacheLoader implements CacheDriver {
   }
 
   public void run() {
-    if (this.ratios.get(OPERATION.PUT) == 0.0
-        && this.ratios.get(OPERATION.PUTIFABSENT) == 0.0) {
-      this.ratios.put(OPERATION.GET, 1.0);
+    if (this.ratios.get(PUTIFABSENT) == 0.0) {
+      this.ratios.put(PUT, 1.0);
     }
-    if ((this.ratios.get(OPERATION.PUT) + this.ratios.get(OPERATION.PUTIFABSENT)) > 1.0) {
+    if ((this.ratios.get(PUT) + this.ratios.get(PUTIFABSENT)) > 1.0) {
       throw new RuntimeException("Sums of ratios (put and putIfAbsent) is higher than 100%");
     }
     logger.info("-- CacheAccessor operations percentage: {}", ratios.toString());
@@ -236,10 +238,10 @@ public class CacheLoader implements CacheDriver {
     double d = rnd.nextDouble();
 
     double min = 0;
-    double max = this.ratios.get(OPERATION.PUTIFABSENT);
+    double max = this.ratios.get(PUTIFABSENT);
     if (d <= max)
-      return OPERATION.PUTIFABSENT;
+      return PUTIFABSENT;
 
-    return OPERATION.PUT;
+    return PUT;
   }
 }
