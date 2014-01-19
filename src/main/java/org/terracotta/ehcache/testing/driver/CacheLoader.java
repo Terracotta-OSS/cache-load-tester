@@ -44,6 +44,9 @@ public class CacheLoader implements CacheDriver {
   private final StatsReporter reporter = StatsReporter.getInstance();
 
   private CacheLoader(final Class<? extends CacheWrapper> cacheWrapperClass, Ehcache[] caches) throws RuntimeException {
+    this.ratios.put(OPERATION.PUT, 0.0);
+    this.ratios.put(OPERATION.PUTIFABSENT, 0.0);
+
     try {
       this.caches = new ArrayList<CacheWrapper>();
       for (Ehcache cache : caches) {

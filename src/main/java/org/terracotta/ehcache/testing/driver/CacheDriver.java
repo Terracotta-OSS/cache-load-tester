@@ -5,12 +5,6 @@ import org.terracotta.ehcache.testing.statistics.StatsNode;
 
 public interface CacheDriver extends Runnable {
 
-//  static final String UPDATE_RATIO = "update";
-//  static final String REMOVE_RATIO = "remove";
-//  static final String GET_RATIO = "get";
-//  static final String PUT_RATIO = "put";
-//  static final String PUTIFABSENT_RATIO = "putIfAbsent";
-
   enum OPERATION {
     STRICT_GET, GET, UPDATE, REMOVE, PUT, PUTIFABSENT;
   }
