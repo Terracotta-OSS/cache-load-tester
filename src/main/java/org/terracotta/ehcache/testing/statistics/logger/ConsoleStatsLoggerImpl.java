@@ -44,7 +44,7 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
         nf.format(stat.getAvgLatency()),
         nf.format(stat.getMinLatency()),
         nf.format(stat.getMaxLatency()),
-		nf.format(stat.getNonstopExceptionCount())));
+		nf.format(stat.getTotalExceptionCount())));
   }
 
   public void log(final StatsNode node) {

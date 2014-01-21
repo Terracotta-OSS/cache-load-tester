@@ -4,7 +4,6 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
 import net.sf.ehcache.constructs.nonstop.RejoinCacheException;
-
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsReporter;
 
@@ -29,57 +28,57 @@ public class CacheWrapperImpl implements CacheWrapper {
 	}
 
 	public void put(Object key, Object value) {
-		long start = (statistics) ? now() : 0;
-		try {
-        cache.put(new Element(key, value));
+    long start = (statistics) ? now() : 0;
+    try {
+      cache.put(new Element(key, value));
     } catch (NonStopCacheException nsce) {
-			writeStats.incrementNonstopExceptionCount();
-		} catch (RejoinCacheException rce){
-			System.out.println("RejoinCacheException:: " + rce.getStackTrace());
-		}
-		long end = (statistics) ? now() : 0;
-		if (statistics) {
-			writeStats.add(end - start);
-		}
-	}
+      writeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
+    }
+    long end = (statistics) ? now() : 0;
+    if (statistics) {
+      writeStats.add(end - start);
+    }
+  }
 
 	public Object putIfAbsent(Object key, Object value) {
-		long start = (statistics) ? now() : 0;
-		Element element = null;
-		try {
-        element = cache.putIfAbsent(new Element(key, value));
-		} catch (NonStopCacheException nsce) {
-			writeStats.incrementNonstopExceptionCount();
-		} catch (RejoinCacheException rce){
-      System.out.println("RejoinCacheException:: " + rce.getStackTrace());
+    long start = (statistics) ? now() : 0;
+    Element element = null;
+    try {
+      element = cache.putIfAbsent(new Element(key, value));
+    } catch (NonStopCacheException nsce) {
+      writeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
     }
-		long end = (statistics) ? now() : 0;
-		if (statistics) {
-			writeStats.add(end - start);
-		}
-		return element;
-	}
+    long end = (statistics) ? now() : 0;
+    if (statistics) {
+      writeStats.add(end - start);
+    }
+    return element;
+  }
 
 	public Object get(Object key) {
-		long start = (statistics) ? now() : 0;
-		try {
-			Element e = cache.get(key);
-			long end = (statistics) ? now() : 0;
-			if (statistics) {
-				readStats.add(end - start);
-			}
-			if (e == null) {
-				return null;
-			}
-			return e.getObjectValue();
-		} catch (NonStopCacheException nsce) {
-			readStats.incrementNonstopExceptionCount();
-		} catch (RejoinCacheException rce){
-			System.out.println("RejoinCacheException:: " + rce.getStackTrace());
-		}
-		
-		return null;
-	}
+    long start = (statistics) ? now() : 0;
+    try {
+      Element e = cache.get(key);
+      long end = (statistics) ? now() : 0;
+      if (statistics) {
+        readStats.add(end - start);
+      }
+      if (e == null) {
+        return null;
+      }
+      return e.getObjectValue();
+    } catch (NonStopCacheException nsce) {
+      readStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
+    }
+
+    return null;
+  }
 
 	/**
 	 * Enables statistics collection and registers cache to
@@ -118,46 +117,40 @@ public class CacheWrapperImpl implements CacheWrapper {
 	}
 
 	public long getOffHeapSize() {
-		try {
-			return cache.getStatistics().getLocalOffHeapSizeInBytes() / KB;
-        } catch (NonStopCacheException nsce) {
-            return -1;
-		} catch (NoSuchMethodError e) {
-			return -1;
-		} catch (UnsupportedOperationException e) {
-			return -1;
-		} catch (RejoinCacheException rce){
-			return -1;
-		}
-	}
+    try {
+      return cache.getStatistics().getLocalOffHeapSizeInBytes() / KB;
+    } catch (NonStopCacheException nsce) {
+      return -1;
+    } catch (NoSuchMethodError e) {
+      return -1;
+    } catch (UnsupportedOperationException e) {
+      return -1;
+    }
+  }
 
 	public long getOnDiskSize() {
-		try {
-			return cache.getStatistics().getLocalDiskSizeInBytes() / KB;
-		} catch (UnsupportedOperationException e) {
-			return -1;
-		} catch (NonStopCacheException nsce) {
-	         return -1;
-		} catch (NoSuchMethodError e) {
-			return -1;
-		} catch (RejoinCacheException rce){
-			return -1;
-		}
-	}
+    try {
+      return cache.getStatistics().getLocalDiskSizeInBytes() / KB;
+    } catch (UnsupportedOperationException e) {
+      return -1;
+    } catch (NonStopCacheException nsce) {
+      return -1;
+    } catch (NoSuchMethodError e) {
+      return -1;
+    }
+  }
 
 	public long getOnHeapSize() {
-		try {
-			return cache.getStatistics().getLocalHeapSizeInBytes() / KB;
-		} catch (NoSuchMethodError e) {
-			return -1;
-        } catch (NonStopCacheException nsce) {
-            return -1;
-		} catch (UnsupportedOperationException e) {
-			return -1;
-		} catch (RejoinCacheException rce){
-			return -1;
-		}
-	}
+    try {
+      return cache.getStatistics().getLocalHeapSizeInBytes() / KB;
+    } catch (NoSuchMethodError e) {
+      return -1;
+    } catch (NonStopCacheException nsce) {
+      return -1;
+    } catch (UnsupportedOperationException e) {
+      return -1;
+    }
+  }
 
   public void remove(Object key) {
     cache.remove(key);

@@ -22,20 +22,20 @@ public class ControlledThroughputCacheWriterWrapper extends CacheWrapperImpl {
 
   @Override
   public void put(final Object key, final Object value) {
-    if(tpsThreshold != -1){
-    	while (writeStats.getThroughput() > tpsThreshold) {
-    	     try {
-    	       Thread.sleep(10);
-    	     } catch (InterruptedException e) {
-    	       e.printStackTrace();
-    	     }
-    	   }
+    if (tpsThreshold != -1) {
+      while (writeStats.getThroughput() > tpsThreshold) {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
     }
     long start = (statistics) ? now() : 0;
     try {
       cache.put(new Element(key, value));
     } catch (NonStopCacheException nsce) {
-      writeStats.incrementNonstopExceptionCount();
+      writeStats.incrementTotalExceptionCount();
     }
     long end = (statistics) ? now() : 0;
     if (statistics) {

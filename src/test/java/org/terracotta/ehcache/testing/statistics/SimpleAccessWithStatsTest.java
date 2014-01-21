@@ -35,12 +35,18 @@ public class SimpleAccessWithStatsTest {
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
     Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
+    CacheLoader loader = CacheLoader.load(cache1, cache2)
+        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+        .enableStatistics(true).sequentially()
+        .addLogger(new CsvStatsLoggerImpl("target/logs-example-load.csv"))
+        .untilFilled();
+    ParallelDriver.inParallel(4, loader).run();
+
     CacheAccessor access = CacheAccessor.access(cache1, cache2)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.02)
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
-        .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"));
-
+        .addLogger(new CsvStatsLoggerImpl("target/logs-example-access.csv"));
     ParallelDriver.inParallel(4, access).run();
 
     long filesize = new File("target/logs-example.csv").length();
@@ -51,26 +57,26 @@ public class SimpleAccessWithStatsTest {
 
   @Test
   public void testConsoleStats() {
-    CacheManager manager = new CacheManager(new Configuration().name("testCsvStats")
+    CacheManager manager = new CacheManager(new Configuration().name("testConsoleStats")
         .defaultCache(new CacheConfiguration("default", 1).maxBytesLocalOffHeap(300, MemoryUnit.MEGABYTES)));
 
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
 
     CacheLoader loader = CacheLoader.load(cache1)
-           .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
-           .enableStatistics(true).sequentially()
-        .addLogger(new CsvStatsLoggerImpl("target/logs-example.csv"))
-           .untilFilled();
-    ParallelDriver.inParallel(40, loader).run();
+        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+        .enableStatistics(true).sequentially().putIfAbsent(1.0)
+        .addLogger(new ConsoleStatsLoggerImpl())
+        .untilFilled();
+    ParallelDriver.inParallel(4, loader).run();
 
 
     CacheAccessor access = CacheAccessor.access(cache1)
-         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200)).putIfAbsent(1.0)
          .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2)
-         .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS)).enableStatistics(true)
+         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 
-    ParallelDriver.inParallel(40, access).run();
+    ParallelDriver.inParallel(4, access).run();
 
     manager.shutdown();
   }

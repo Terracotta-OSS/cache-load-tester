@@ -14,9 +14,8 @@ public class Stats {
 	private Stats period = null;
 	private AtomicLong transactionsCount;
 
-	private final AtomicLong startTime = new AtomicLong(
-			System.currentTimeMillis());
-	private AtomicLong nonstopExceptionCount = new AtomicLong();
+	private final AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
+	private AtomicLong totalExceptionCount = new AtomicLong();
 	private AtomicLong endTime = null;
 	private AtomicLong totalTxLatency;
 	private double minLatency, maxLatency;
@@ -28,27 +27,27 @@ public class Stats {
 	}
 
 	public Stats(Stats stat) {
-		if (stat != null) {
-			init(stat.getTxnCount(), stat.totalTxLatency.get(),
-					stat.minLatency, stat.maxLatency, stat.startTime,
-					stat.endTime, stat.getNonstopExceptionCount(),
-					stat.getHisto());
-		} else {
-			defaultInit();
-		}
-	}
+    if (stat != null) {
+      init(stat.getTxnCount(), stat.totalTxLatency.get(),
+          stat.minLatency, stat.maxLatency, stat.startTime,
+          stat.endTime, stat.getTotalExceptionCount(),
+          stat.getHisto());
+    } else {
+      defaultInit();
+    }
+  }
 
 	private void defaultInit() {
-		init(0, 0, Double.MAX_VALUE, Double.MIN_VALUE, null, null, 0, null);
-	}
+    init(0, 0, Double.MAX_VALUE, Double.MIN_VALUE, null, null, 0, null);
+  }
 
-	private void init(long transactionsCount, long total, double minLatency,
-			double maxLatency, AtomicLong startTime, AtomicLong endTime,
-			long nonstop, Histogram hist) {
+  private void init(long transactionsCount, long total, double minLatency,
+                    double maxLatency, AtomicLong startTime, AtomicLong endTime,
+                    long totalExceptions, Histogram hist) {
 
-		this.transactionsCount = new AtomicLong(transactionsCount);
+    this.transactionsCount = new AtomicLong(transactionsCount);
 		this.totalTxLatency = new AtomicLong(total);
-		this.nonstopExceptionCount = new AtomicLong(nonstop);
+		this.totalExceptionCount = new AtomicLong(totalExceptions);
 		this.minLatency = minLatency;
 		this.maxLatency = maxLatency;
 
@@ -95,7 +94,7 @@ public class Stats {
 
         if (enableHisto)
             this.histo.add(stat.histo);
-		this.nonstopExceptionCount.addAndGet(stat.nonstopExceptionCount.get());
+		this.totalExceptionCount.addAndGet(stat.totalExceptionCount.get());
 
 		return this;
 	}
@@ -139,11 +138,11 @@ public class Stats {
 			period.maxLatency = txLength;
 	}
 
-	public void incrementNonstopExceptionCount() {
-	    if (period != null)
-	        period.nonstopExceptionCount.incrementAndGet();
-		nonstopExceptionCount.incrementAndGet();
-	}
+	public void incrementTotalExceptionCount() {
+    if (period != null)
+      period.totalExceptionCount.incrementAndGet();
+    totalExceptionCount.incrementAndGet();
+  }
 
 	/**
 	 * @return average latency
@@ -175,12 +174,12 @@ public class Stats {
 	}
 
 	/**
-	 * resets the stats to {@link init()}
+	 * resets the stats
 	 */
 	public synchronized void reset() {
 		transactionsCount.set(0);
 		totalTxLatency.set(0);
-		nonstopExceptionCount.set(0);
+		totalExceptionCount.set(0);
 		minLatency = Double.MAX_VALUE;
 		maxLatency = Double.MIN_VALUE;
 		this.startTime.set(System.currentTimeMillis());
@@ -196,8 +195,7 @@ public class Stats {
 	}
 
 	public long getThroughput() {
-		long end = (endTime != null) ? endTime.get() : System
-				.currentTimeMillis();
+		long end = (endTime != null) ? endTime.get() : System.currentTimeMillis();
 		long time = end - this.startTime.get();
 		if (time == 0)
 			time = 1;
@@ -221,23 +219,25 @@ public class Stats {
 		this.endTime.set(System.currentTimeMillis());
 	}
 
-	public long getNonstopExceptionCount() {
-		return nonstopExceptionCount.get();
-	}
+  public long getTotalExceptionCount() {
+    return totalExceptionCount.get();
+  }
 
-	public Histogram getHisto() {
-		return histo;
-	}
+  public Histogram getHisto() {
+    return histo;
+  }
 
-	@Override
+  @Override
 	public String toString() {
-		return String
-				.format("Txns: %s, TPS: %s, Latency(ms): Avg: %s, Min: %s, Max: %s, NonstopExceptionCount: %s",
-						nf.format(this.getTxnCount()),
-						nf.format(this.getThroughput()),
-						nf.format(this.getAvgLatency()),
-						nf.format(this.getMinLatency()),
-						nf.format(this.getMaxLatency()),
-						nf.format(this.getNonstopExceptionCount()));
-	}
+    return String
+        .format("Txns: %s, TPS: %s, Latency(ms): Avg: %s, Min: %s, Max: %s, TotalExceptionCount: %s",
+            nf.format(this.getTxnCount()),
+            nf.format(this.getThroughput()),
+            nf.format(this.getAvgLatency()),
+            nf.format(this.getMinLatency()),
+            nf.format(this.getMaxLatency()),
+            nf.format(this.getTotalExceptionCount())
+        );
+  }
+
 }

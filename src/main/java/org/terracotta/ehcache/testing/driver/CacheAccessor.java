@@ -268,11 +268,10 @@ public abstract class CacheAccessor implements CacheDriver {
 
     @Override
     public void run() {
-      if (this.ratios.get(REMOVE) == 0.0 && this.ratios.get(UPDATE) == 0.0
-          && this.ratios.get(GET) == 0.0 && this.ratios.get(PUT) == 0.0
-          && this.ratios.get(PUTIFABSENT) == 0.0) {
-        this.ratios.put(GET, 1.0);
-      }
+      double sumOfRatios = this.ratios.get(REMOVE) + this.ratios.get(UPDATE) + this.ratios.get(PUT)+ this.ratios.get(PUTIFABSENT);
+      double remainingRatio = 1.0 - sumOfRatios;
+      this.ratios.put(GET, remainingRatio);
+
       logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
       if ((this.ratios.get(REMOVE) + this.ratios.get(UPDATE)
            + this.ratios.get(GET) + this.ratios.get(PUT) +
