@@ -182,13 +182,16 @@ public class CacheLoader implements CacheDriver {
   }
 
   public void run() {
-    double sumOfRatios = this.ratios.get(PUTIFABSENT);
-    double remainingRatio = 1.0 - sumOfRatios;
-    this.ratios.put(PUT, remainingRatio);
-
-    if ((this.ratios.get(PUT) + this.ratios.get(PUTIFABSENT)) > 1.0) {
+    double sumOfRatios = this.ratios.get(PUTIFABSENT) + this.ratios.get(PUT);
+    if (sumOfRatios > 1.0) {
       throw new RuntimeException("Sums of ratios (put and putIfAbsent) is higher than 100%");
     }
+    if (this.ratios.get(PUT) == 0.0) {
+      double sumOfOtherRatios = this.ratios.get(PUTIFABSENT);
+      double remainingRatio = 1.0 - sumOfOtherRatios;
+      this.ratios.put(PUT, remainingRatio);
+    }
+
     logger.info("-- CacheLoader loader percentage: {}", ratios.toString());
 
     Sequence seeds = sequenceGenerator.createSequence();

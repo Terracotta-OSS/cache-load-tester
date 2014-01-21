@@ -45,12 +45,12 @@ public class SimpleAccessWithStatsTest {
     CacheAccessor access = CacheAccessor.access(cache1, cache2)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.02)
-        .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
+        .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
         .addLogger(new CsvStatsLoggerImpl("target/logs-example-access.csv"));
     ParallelDriver.inParallel(4, access).run();
 
-    long filesize = new File("target/logs-example.csv").length();
-    Assert.assertTrue("CSV file should not be empty", filesize > 0);
+    Assert.assertTrue("Load CSV file should not be empty", new File("target/logs-example-load.csv").length() > 0);
+    Assert.assertTrue("Access CSV file should not be empty", new File("target/logs-example-access.csv").length() > 0);
 
     manager.shutdown();
   }
@@ -73,7 +73,7 @@ public class SimpleAccessWithStatsTest {
     CacheAccessor access = CacheAccessor.access(cache1)
          .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200)).putIfAbsent(1.0)
          .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2)
-         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS)).enableStatistics(true)
+         .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 
     ParallelDriver.inParallel(4, access).run();
