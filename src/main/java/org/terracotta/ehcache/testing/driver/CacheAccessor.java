@@ -392,6 +392,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
     private void putIfAbsentOnce(long seed) {
       Object key = keyGenerator.generate(seed);
+      cacheWrapper.remove(key);         // We remove the Element first so the putIfAbsent will always do a put
       cacheWrapper.putIfAbsent(key, valueGenerator.generate(seed));
     }
 

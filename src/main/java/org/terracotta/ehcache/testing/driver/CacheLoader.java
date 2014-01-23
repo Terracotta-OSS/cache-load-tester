@@ -207,7 +207,9 @@ public class CacheLoader implements CacheDriver {
             cache.put(keyGenerator.generate(seed), valueGenerator.generate(seed));
             break;
           case PUT_IF_ABSENT:
-            cache.putIfAbsent(keyGenerator.generate(seed), valueGenerator.generate(seed));
+            final Object key = keyGenerator.generate(seed);
+            cache.remove(key);         // We remove the Element first so the putIfAbsent will always do a put
+            cache.putIfAbsent(key, valueGenerator.generate(seed));
             break;
         }
       }
