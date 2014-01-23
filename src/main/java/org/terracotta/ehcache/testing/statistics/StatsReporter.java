@@ -108,8 +108,7 @@ public class StatsReporter {
           try {
             TimeUnit.SECONDS.sleep(reportPeriod);
           } catch (InterruptedException e) {
-//			e.printStackTrace();
-        	logger.debug("StatsReporter interrupted.");
+            logger.debug("StatsReporter interrupted.", e);
             return;
           }
           doReport();
@@ -162,6 +161,7 @@ public class StatsReporter {
     cacheWrappers.put(name, cacheWrapper);
     node.addReadStats(name, cacheWrapper.getReadStats());
     node.addWriteStats(name, cacheWrapper.getWriteStats());
+    node.addRemoveStats(name, cacheWrapper.getRemoveStats());
   }
 
   public StatsNode getFinalStats() {
@@ -169,7 +169,7 @@ public class StatsReporter {
   }
 
   private void finalise() {
-	node.finalise();
+    node.finalise();
     statsLoggers.clear();
   }
 

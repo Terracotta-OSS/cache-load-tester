@@ -27,7 +27,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUTIFABSENT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT_IF_ABSENT;
 
 public class CacheLoader implements CacheDriver {
   private static Logger logger = LoggerFactory.getLogger(CacheLoader.class);
@@ -46,7 +46,7 @@ public class CacheLoader implements CacheDriver {
 
   private CacheLoader(final Class<? extends CacheWrapper> cacheWrapperClass, Ehcache[] caches) throws RuntimeException {
     this.ratios.put(PUT, 0.0);
-    this.ratios.put(PUTIFABSENT, 0.0);
+    this.ratios.put(PUT_IF_ABSENT, 0.0);
 
     try {
       this.caches = new ArrayList<CacheWrapper>();
@@ -62,7 +62,7 @@ public class CacheLoader implements CacheDriver {
 
   private CacheLoader(CacheLoader loader, SequenceGenerator sequenceGenerator) {
     this.ratios.put(PUT, 0.0);
-    this.ratios.put(PUTIFABSENT, 0.0);
+    this.ratios.put(PUT_IF_ABSENT, 0.0);
 
     this.caches = loader.caches;
     this.keyGenerator = loader.keyGenerator;
@@ -105,7 +105,7 @@ public class CacheLoader implements CacheDriver {
   }
 
   public CacheLoader putIfAbsent(final double percentage) {
-    this.ratios.put(PUTIFABSENT, percentage);
+    this.ratios.put(PUT_IF_ABSENT, percentage);
     return this;
   }
 
@@ -182,12 +182,12 @@ public class CacheLoader implements CacheDriver {
   }
 
   public void run() {
-    double sumOfRatios = this.ratios.get(PUTIFABSENT) + this.ratios.get(PUT);
+    double sumOfRatios = this.ratios.get(PUT_IF_ABSENT) + this.ratios.get(PUT);
     if (sumOfRatios > 1.0) {
       throw new RuntimeException("Sums of ratios (put and putIfAbsent) is higher than 100%");
     }
     if (this.ratios.get(PUT) == 0.0) {
-      double sumOfOtherRatios = this.ratios.get(PUTIFABSENT);
+      double sumOfOtherRatios = this.ratios.get(PUT_IF_ABSENT);
       double remainingRatio = 1.0 - sumOfOtherRatios;
       this.ratios.put(PUT, remainingRatio);
     }
@@ -206,7 +206,7 @@ public class CacheLoader implements CacheDriver {
           case PUT:
             cache.put(keyGenerator.generate(seed), valueGenerator.generate(seed));
             break;
-          case PUTIFABSENT:
+          case PUT_IF_ABSENT:
             cache.putIfAbsent(keyGenerator.generate(seed), valueGenerator.generate(seed));
             break;
         }
@@ -242,9 +242,9 @@ public class CacheLoader implements CacheDriver {
     double d = rnd.nextDouble();
 
     double min = 0;
-    double max = this.ratios.get(PUTIFABSENT);
+    double max = this.ratios.get(PUT_IF_ABSENT);
     if (d <= max)
-      return PUTIFABSENT;
+      return PUT_IF_ABSENT;
 
     return PUT;
   }

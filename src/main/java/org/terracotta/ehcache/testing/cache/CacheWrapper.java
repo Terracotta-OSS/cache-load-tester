@@ -22,7 +22,7 @@ public interface CacheWrapper {
    * @param key
    * @return value
    */
-  public Object get(Object key);
+  Object get(Object key);
 
   /**
    * Stores key-value pair in the cache
@@ -30,7 +30,7 @@ public interface CacheWrapper {
    * @param key
    * @param value
    */
-  public void put(Object key, Object value);
+  void put(Object key, Object value);
 
   /**
    * Put if key is absent
@@ -39,28 +39,34 @@ public interface CacheWrapper {
    * @param value
    * @return value
    */
-  public Object putIfAbsent(Object key, Object value);
+  Object putIfAbsent(Object key, Object value);
 
   /**
    * Remove key from the cache
    *
    * @param key
    */
-  public void remove(Object key);
+  boolean remove(Object key);
+
+  boolean removeElement(Object key, final Object value);
+
+  Element replace(Object key, Object value);
+
+  boolean replaceElement(Object oldKey, Object oldValue, final Object newKey, final Object newValue);
 
   /**
    * Get the name of the underlying cache.
    *
    * @return name of the cache
    */
-  public String getName();
+  String getName();
 
   /**
    * Get the size of the cache
    *
    * @return cache size
    */
-  public Long getSize();
+ Long getSize();
 
   /**
    * enables statistics collection
@@ -68,44 +74,51 @@ public interface CacheWrapper {
    *
    * @param enabled
    */
-  public void setStatisticsEnabled(boolean enabled);
+ void setStatisticsEnabled(boolean enabled);
 
   /**
    * get @Stats for read operations
    *
    * @return read stats
    */
-  public Stats getReadStats();
+   Stats getReadStats();
 
   /**
    * get @Stats for write operations
    *
    * @return write stats
    */
-  public Stats getWriteStats();
+  Stats getWriteStats();
+
+  /**
+   * get @Stats for remove operations
+   *
+   * @return remove stats
+   */
+  Stats getRemoveStats();
 
   /**
    * Resets read/write stats
    * Useful if running test in phases
    */
-  public void resetStats();
+  void resetStats();
 
   /**
-   * gets the {@link OffHeapStore} in KB
+   * gets the {@link net.sf.ehcache.store.offheap.OffHeapStore} in KB
    *
    * @return offheap in MB
    */
-  public long getOffHeapSize();
+   long getOffHeapSize();
 
   /**
-   * gets the {@link MemoryStore} size in KB
+   * gets the {@link net.sf.ehcache.store.MemoryStore} size in KB
    *
    * @return size in MB
    */
-  public long getOnHeapSize();
+  long getOnHeapSize();
 
   /**
-   * get the {@link DiskStore} size in KB
+   * get the {@link net.sf.ehcache.store.disk.DiskStore} size in KB
    *
    * @return
    */

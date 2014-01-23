@@ -38,8 +38,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.GET;
 import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUTIFABSENT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT_IF_ABSENT;
 import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REMOVE;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REMOVE_ELEMENT;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REPLACE;
+import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REPLACE_ELEMENT;
 import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.UPDATE;
 
 public abstract class CacheAccessor implements CacheDriver {
@@ -165,9 +168,12 @@ public abstract class CacheAccessor implements CacheDriver {
    * @param percentage ratio between 0.0 - 1.0
    * @return this
    */
+  public abstract CacheAccessor get(double percentage);
   public abstract CacheAccessor update(double percentage);
   public abstract CacheAccessor remove(double percentage);
-  public abstract CacheAccessor get(double percentage);
+  public abstract CacheAccessor removeElement(double percentage);
+  public abstract CacheAccessor replace(double percentage);
+  public abstract CacheAccessor replaceElement(double percentage);
   public abstract CacheAccessor put(double percentage);
   public abstract CacheAccessor putIfAbsent(double percentage);
 
@@ -218,7 +224,9 @@ public abstract class CacheAccessor implements CacheDriver {
   }
 
   public StatsNode getFinalStatsNode(){
-	  return reporter.getFinalStats();
+    if (!statistics)
+      throw new IllegalStateException("Statistics are not enabled!");
+    return reporter.getFinalStats();
   }
 
   private static long now(){
@@ -259,27 +267,32 @@ public abstract class CacheAccessor implements CacheDriver {
     public IndividualCacheAccessor(Ehcache cache) {
       this.cacheWrapper = new CacheWrapperImpl(cache);
 
-      this.ratios.put(REMOVE, 0.0);
-      this.ratios.put(UPDATE, 0.0);
       this.ratios.put(GET, 0.0);
+      this.ratios.put(UPDATE, 0.0);
+      this.ratios.put(REMOVE, 0.0);
+      this.ratios.put(REMOVE_ELEMENT, 0.0);
+      this.ratios.put(REPLACE, 0.0);
+      this.ratios.put(REPLACE_ELEMENT, 0.0);
       this.ratios.put(PUT, 0.0);
-      this.ratios.put(PUTIFABSENT, 0.0);
+      this.ratios.put(PUT_IF_ABSENT, 0.0);
     }
 
     @Override
     public void run() {
-      double sumOfRatios = this.ratios.get(REMOVE) + this.ratios.get(UPDATE) + this.ratios.get(PUT)
-                           + this.ratios.get(PUTIFABSENT) + this.ratios.get(GET);
+      double sumOfRatios = this.ratios.get(GET) + this.ratios.get(UPDATE) + this.ratios.get(REMOVE)
+                           + this.ratios.get(REMOVE_ELEMENT) + this.ratios.get(REPLACE)
+                           + this.ratios.get(REPLACE_ELEMENT) + this.ratios.get(PUT)
+                           + this.ratios.get(PUT_IF_ABSENT);
       if (sumOfRatios > 1.0) {
-        throw new RuntimeException("Sums of ratios (remove, update, get, put and putIfAbsent) is higher than 100%");
+        throw new RuntimeException("Sums of ratios is higher than 100%");
       }
       if (this.ratios.get(GET) == 0.0) {
-        double sumOfOtherRatios = this.ratios.get(REMOVE) + this.ratios.get(UPDATE) + this.ratios.get(PUT)
-                             + this.ratios.get(PUTIFABSENT);
+        double sumOfOtherRatios = this.ratios.get(UPDATE) + this.ratios.get(REMOVE) + this.ratios.get(REMOVE_ELEMENT)
+            + this.ratios.get(REPLACE) + this.ratios.get(REPLACE_ELEMENT) + this.ratios.get(PUT)
+            + this.ratios.get(PUT_IF_ABSENT);
         double remainingRatio = 1.0 - sumOfOtherRatios;
         this.ratios.put(GET, remainingRatio);
       }
-
       logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
       super.run();
     }
@@ -357,6 +370,21 @@ public abstract class CacheAccessor implements CacheDriver {
       cacheWrapper.remove(key);
     }
 
+    private void removeElementOnce(long seed) {
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.removeElement(key, valueGenerator.generate(seed));
+    }
+
+    private void replaceOnce(long seed) {
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.replace(key, valueGenerator.generate(seed));
+    }
+
+    private void replaceElementOnce(long seed) {
+      Object key = keyGenerator.generate(seed);
+      cacheWrapper.replaceElement(key, valueGenerator.generate(seed), key, valueGenerator.generate(seed));
+    }
+
     private void putOnce(long seed) {
       Object key = keyGenerator.generate(seed);
       cacheWrapper.put(key, valueGenerator.generate(seed));
@@ -394,9 +422,24 @@ public abstract class CacheAccessor implements CacheDriver {
         return PUT;
 
       min = max;
-      max = min + this.ratios.get(PUTIFABSENT);
+      max = min + this.ratios.get(PUT_IF_ABSENT);
       if (d > min && d <= max)
-        return PUTIFABSENT;
+        return PUT_IF_ABSENT;
+
+      min = max;
+      max = min + this.ratios.get(REMOVE_ELEMENT);
+      if (d > min && d <= max)
+        return REMOVE_ELEMENT;
+
+      min = max;
+      max = min + this.ratios.get(REPLACE);
+      if (d > min && d <= max)
+        return REPLACE;
+
+      min = max;
+      max = min + this.ratios.get(REPLACE_ELEMENT);
+      if (d > min && d <= max)
+        return REPLACE_ELEMENT;
 
       if (Validation.Mode.STRICT.equals(this.validationMode))
         return OPERATION.STRICT_GET;
@@ -429,10 +472,19 @@ public abstract class CacheAccessor implements CacheDriver {
         case REMOVE:
           removeOnce(seed);
           break;
+        case REMOVE_ELEMENT:
+          removeElementOnce(seed);
+          break;
+        case REPLACE:
+          replaceOnce(seed);
+          break;
+        case REPLACE_ELEMENT:
+          replaceElementOnce(seed);
+          break;
         case PUT:
           putOnce(seed);
           break;
-        case PUTIFABSENT:
+        case PUT_IF_ABSENT:
           putIfAbsentOnce(seed);
           break;
       }
@@ -568,6 +620,24 @@ public abstract class CacheAccessor implements CacheDriver {
     }
 
     @Override
+    public CacheAccessor removeElement(final double percentage) {
+      this.ratios.put(REMOVE_ELEMENT, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor replace(final double percentage) {
+      this.ratios.put(REPLACE, percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor replaceElement(final double percentage) {
+      this.ratios.put(REPLACE_ELEMENT, percentage);
+      return this;
+    }
+
+    @Override
     public CacheAccessor get(final double percentage) {
       this.ratios.put(GET, percentage);
       return this;
@@ -581,7 +651,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
     @Override
     public CacheAccessor putIfAbsent(final double percentage) {
-      this.ratios.put(PUTIFABSENT, percentage);
+      this.ratios.put(PUT_IF_ABSENT, percentage);
       return this;
     }
 
@@ -833,6 +903,27 @@ public abstract class CacheAccessor implements CacheDriver {
     public CacheAccessor remove(final double percentage) {
       for (IndividualCacheAccessor individualCacheAccessor : accessors)
         individualCacheAccessor.remove(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor removeElement(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.removeElement(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor replace(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.replace(percentage);
+      return this;
+    }
+
+    @Override
+    public CacheAccessor replaceElement(final double percentage) {
+      for (IndividualCacheAccessor individualCacheAccessor : accessors)
+        individualCacheAccessor.replaceElement(percentage);
       return this;
     }
 

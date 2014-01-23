@@ -69,10 +69,9 @@ public class SimpleAccessWithStatsTest {
         .untilFilled();
     ParallelDriver.inParallel(4, loader).run();
 
-
     CacheAccessor access = CacheAccessor.access(cache1)
-         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200)).putIfAbsent(1.0)
-         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2)
+         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2).putIfAbsent(0.6)
          .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 

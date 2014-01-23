@@ -12,6 +12,7 @@ public class CacheWrapperImpl implements CacheWrapper {
 	private static final int KB = 1024;
 	private final Stats readStats;
   protected final Stats writeStats;
+  protected final Stats removeStats;
 
 	protected final Ehcache cache;
 	protected boolean statistics = false;
@@ -25,8 +26,10 @@ public class CacheWrapperImpl implements CacheWrapper {
 		this.cache = cache;
 		readStats = new Stats();
 		writeStats = new Stats();
+		removeStats = new Stats();
 	}
 
+  @Override
 	public void put(Object key, Object value) {
     long start = (statistics) ? now() : 0;
     try {
@@ -42,6 +45,7 @@ public class CacheWrapperImpl implements CacheWrapper {
     }
   }
 
+  @Override
 	public Object putIfAbsent(Object key, Object value) {
     long start = (statistics) ? now() : 0;
     Element element = null;
@@ -59,6 +63,7 @@ public class CacheWrapperImpl implements CacheWrapper {
     return element;
   }
 
+  @Override
 	public Object get(Object key) {
     long start = (statistics) ? now() : 0;
     try {
@@ -74,13 +79,84 @@ public class CacheWrapperImpl implements CacheWrapper {
     } catch (NonStopCacheException nsce) {
       readStats.incrementTotalExceptionCount();
     } catch (RejoinCacheException rce) {
-      writeStats.incrementTotalExceptionCount();
+      readStats.incrementTotalExceptionCount();
     }
 
     return null;
   }
 
-	/**
+  public boolean remove(Object key) {
+    boolean removed = false;
+    long start = (statistics) ? now() : 0;
+    try {
+      removed = cache.remove(key);
+      long end = (statistics) ? now() : 0;
+      if (statistics) {
+        removeStats.add(end - start);
+      }
+    } catch (NonStopCacheException nsce) {
+      removeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      removeStats.incrementTotalExceptionCount();
+    }
+    return removed;
+  }
+
+  @Override
+  public boolean removeElement(final Object key, final Object value) {
+    boolean removed = false;
+    long start = (statistics) ? now() : 0;
+    try {
+      removed = cache.removeElement(new Element(key, value));
+      long end = (statistics) ? now() : 0;
+      if (statistics) {
+        removeStats.add(end - start);
+      }
+    } catch (NonStopCacheException nsce) {
+      removeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      removeStats.incrementTotalExceptionCount();
+    }
+    return removed;
+  }
+
+  @Override
+  public Element replace(final Object key, final Object value) {
+    long start = (statistics) ? now() : 0;
+    Element element = null;
+    try {
+      element = cache.replace(new Element(key, value));
+    } catch (NonStopCacheException nsce) {
+      writeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
+    }
+    long end = (statistics) ? now() : 0;
+    if (statistics) {
+      writeStats.add(end - start);
+    }
+    return element;
+  }
+
+  @Override
+  public boolean replaceElement(final Object oldKey, final Object oldValue, final Object newKey, final Object newValue) {
+    long start = (statistics) ? now() : 0;
+    boolean replaced = false;
+    try {
+      replaced = cache.replace(new Element(oldKey, oldValue), new Element(newKey, newValue));
+    } catch (NonStopCacheException nsce) {
+      writeStats.incrementTotalExceptionCount();
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
+    }
+    long end = (statistics) ? now() : 0;
+    if (statistics) {
+      writeStats.add(end - start);
+    }
+    return replaced;
+  }
+
+  /**
 	 * Enables statistics collection and registers cache to
 	 * {@link StatsReporter}
 	 */
@@ -111,9 +187,14 @@ public class CacheWrapperImpl implements CacheWrapper {
 		return writeStats;
 	}
 
-	public void resetStats() {
+  public Stats getRemoveStats() {
+    return removeStats;
+  }
+
+  public void resetStats() {
 		readStats.reset();
 		writeStats.reset();
+		removeStats.reset();
 	}
 
 	public long getOffHeapSize() {
@@ -150,10 +231,6 @@ public class CacheWrapperImpl implements CacheWrapper {
     } catch (UnsupportedOperationException e) {
       return -1;
     }
-  }
-
-  public void remove(Object key) {
-    cache.remove(key);
   }
 
 	public Ehcache getCache() {
