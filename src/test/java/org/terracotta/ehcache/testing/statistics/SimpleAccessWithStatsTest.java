@@ -21,9 +21,6 @@ import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
-/**
- * Made by aurbrsz / 10/24/11 - 22:59
- */
 public class SimpleAccessWithStatsTest {
 
   @Test
@@ -57,19 +54,21 @@ public class SimpleAccessWithStatsTest {
 
   @Test
   public void testConsoleStats() {
-    CacheManager manager = new CacheManager(new Configuration().name("testConsoleStats")
-        .defaultCache(new CacheConfiguration("default", 1).maxBytesLocalOffHeap(300, MemoryUnit.MEGABYTES)));
+    CacheManager manager = new CacheManager(new Configuration().name("testCsvStats")
+        .maxBytesLocalHeap(50, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
 
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
+    Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
-    CacheLoader loader = CacheLoader.load(cache1)
+    CacheLoader loader = CacheLoader.load(cache1, cache2)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
         .enableStatistics(true).sequentially().putIfAbsent(1.0)
         .addLogger(new ConsoleStatsLoggerImpl())
         .untilFilled();
     ParallelDriver.inParallel(4, loader).run();
 
-    CacheAccessor access = CacheAccessor.access(cache1)
+    CacheAccessor access = CacheAccessor.access(cache1, cache2)
          .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
          .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2).putIfAbsent(0.6)
          .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
