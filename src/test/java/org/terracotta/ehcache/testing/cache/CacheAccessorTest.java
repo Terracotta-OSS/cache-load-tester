@@ -7,10 +7,9 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
-import org.terracotta.ehcache.testing.driver.CacheDriver;
-import org.terracotta.ehcache.testing.driver.ParallelDriver;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
+import org.terracotta.ehcache.testing.operation.EhcacheOperation;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
@@ -18,6 +17,8 @@ import org.terracotta.ehcache.testing.statistics.StatsNode;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
 
 public class CacheAccessorTest {
 
@@ -29,8 +30,10 @@ public class CacheAccessorTest {
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheAccessor accessor = CacheAccessor.access(one)
-          .putIfAbsent(0.20).put(0.20).get(0.20).update(0.20).remove(0.21)
-          .replaceElement(0.10).replace(0.11).removeElement(0.05)
+          .doOps(putIfAbsent(0.20), put(0.20), get(0.20),
+              update(0.20),
+              remove(0.21), replaceElement(0.10), replace(0.11),
+              removeElement(0.05))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
           .stopAfter(10, TimeUnit.SECONDS);
@@ -49,8 +52,8 @@ public class CacheAccessorTest {
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheAccessor accessor = CacheAccessor.access(one).enableStatistics(true)
-          .putIfAbsent(0.10).put(0.10).update(0.10).remove(0.10)
-          .replaceElement(0.10).replace(0.10).removeElement(0.10)
+          .doOps(putIfAbsent(0.10), put(0.10), update(0.10), remove(0.10),
+              replaceElement(0.10), replace(0.10), removeElement(0.05))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
           .stopAfter(10, TimeUnit.SECONDS);

@@ -1,6 +1,5 @@
 package org.terracotta.ehcache.testing.statistics;
 
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
@@ -14,6 +13,7 @@ import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.driver.ParallelDriver;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
+import org.terracotta.ehcache.testing.operation.EhcacheOperation;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
@@ -21,6 +21,8 @@ import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
 
 public class StatsReporterTest {
 
@@ -83,7 +85,7 @@ public class StatsReporterTest {
           .using(StringGenerator.integers(),
               ByteArrayGenerator.randomSize(300, 1200))
           .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
-          .update(0.2).remove(0.1)
+          .doOps(update(0.2), EhcacheOperation.remove(0.1))
           .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS))
           .enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl());
 
@@ -134,7 +136,7 @@ public class StatsReporterTest {
             .using(StringGenerator.integers(),
                 ByteArrayGenerator.randomSize(300, 1200))
             .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
-            .update(0.2)
+            .doOps(update(0.2))
             .terminateOn(
                 new TimedTerminationCondition(10, TimeUnit.SECONDS))
             .enableStatistics(true)

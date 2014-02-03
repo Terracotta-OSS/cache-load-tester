@@ -121,11 +121,11 @@ public class CacheWrapperImpl implements CacheWrapper {
   }
 
   @Override
-  public Element replace(final Object key, final Object value) {
+  public Element replace(final Object key, Object newValue) {
     long start = (statistics) ? now() : 0;
     Element element = null;
     try {
-      element = cache.replace(new Element(key, value));
+      element = cache.replace(new Element(key, newValue));
     } catch (NonStopCacheException nsce) {
       writeStats.incrementTotalExceptionCount();
     } catch (RejoinCacheException rce) {

@@ -5,8 +5,6 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-import net.sf.ehcache.config.TerracottaClientConfiguration;
-import net.sf.ehcache.config.TerracottaConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
@@ -15,10 +13,11 @@ import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
-import org.terracotta.ehcache.testing.termination.IterationTerminationCondition;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
 import java.util.concurrent.TimeUnit;
+
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
 
 /**
  * Made by aurbrsz / 10/28/11 - 18:19
@@ -87,7 +86,7 @@ public class EquivalentCachesStats {
     CacheAccessor access = CacheAccessor.access(cache)
         .enableStatistics(true)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
-        .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).update(0.1)
+        .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).doOps(update(0.1))
         .terminateOn(new TimedTerminationCondition(30, TimeUnit.SECONDS))
         .addLogger(new ConsoleStatsLoggerImpl());
 

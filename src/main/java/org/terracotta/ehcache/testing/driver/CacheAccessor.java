@@ -3,50 +3,20 @@ package org.terracotta.ehcache.testing.driver;
 import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
-import org.terracotta.ehcache.testing.cache.CacheWrapperImpl;
 import org.terracotta.ehcache.testing.driver.AccessPattern.Pattern;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
+import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
-import org.terracotta.ehcache.testing.sequencegenerator.RandomSequenceGenerator;
-import org.terracotta.ehcache.testing.sequencegenerator.SequenceGenerator;
-import org.terracotta.ehcache.testing.sequencegenerator.SequenceGenerator.Sequence;
-import org.terracotta.ehcache.testing.sequencegenerator.SequentialSequenceGenerator;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
 import org.terracotta.ehcache.testing.statistics.StatsReporter;
 import org.terracotta.ehcache.testing.statistics.logger.StatsLogger;
-import org.terracotta.ehcache.testing.termination.FilledTerminationCondition;
 import org.terracotta.ehcache.testing.termination.TerminationCondition;
-import org.terracotta.ehcache.testing.termination.TerminationCondition.Condition;
-import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
-import org.terracotta.ehcache.testing.validator.EqualityValidation;
 import org.terracotta.ehcache.testing.validator.Validation;
-import org.terracotta.ehcache.testing.validator.Validation.Validator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.GET;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.PUT_IF_ABSENT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REMOVE;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REMOVE_ELEMENT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REPLACE;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.REPLACE_ELEMENT;
-import static org.terracotta.ehcache.testing.driver.CacheDriver.OPERATION.UPDATE;
 
 public abstract class CacheAccessor implements CacheDriver {
-  private static Logger logger = LoggerFactory.getLogger(CacheAccessor.class);
   private final StatsReporter reporter = StatsReporter.getInstance();
 
   protected boolean statistics = false;
@@ -63,6 +33,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
   /**
    * Add ehcache to be accessed
+   *
    * @param one Ehcache
    * @return this
    */
@@ -133,6 +104,7 @@ public abstract class CacheAccessor implements CacheDriver {
 
   /**
    * Terminate when {@link TerminationCondition} is met.
+   *
    * @param termination
    * @return
    */
@@ -156,7 +128,8 @@ public abstract class CacheAccessor implements CacheDriver {
 
   /**
    * Sets access pattern for the {@link MultipleCacheAccessor}
-   * @param pattern {@link Pattern} type
+   *
+   * @param pattern  {@link Pattern} type
    * @param duration durationInSecs for transition (SPIKE,WAVE)
    * @param interval interval in secs
    * @return this
@@ -164,49 +137,32 @@ public abstract class CacheAccessor implements CacheDriver {
   public abstract CacheAccessor accessPattern(Pattern pattern, int duration, int interval);
 
   /**
-   * Set a ratio for each operation
-   * @param percentage ratio between 0.0 - 1.0
+   * Add operations that we want to execute, with their ratio
+   *
+   * @param cacheOperations an array of Operations
    * @return this
    */
-  public abstract CacheAccessor get(double percentage);
-  public abstract CacheAccessor update(double percentage);
-  public abstract CacheAccessor remove(double percentage);
-  public abstract CacheAccessor removeElement(double percentage);
-  public abstract CacheAccessor replace(double percentage);
-  public abstract CacheAccessor replaceElement(double percentage);
-  public abstract CacheAccessor put(double percentage);
-  public abstract CacheAccessor putIfAbsent(double percentage);
-
-  /**
-   * @deprecated use update(updateRatio) to set update ratio.
-   *
-   * @param updateRatio value between 0.0 - 1.0
-   * @return
-   */
-  @Deprecated
-  public abstract CacheAccessor updateRatio(double updateRatio);
-
-  /**
-   * @deprecated use remove(removeRatio) to set remove ratio.
-   *
-   * @param removeRatio value between 0.0 - 1.0
-   * @return
-   */
-  @Deprecated
-  public abstract CacheAccessor removeRatio(double removeRatio);
+  public abstract CacheAccessor doOps(CacheOperation... cacheOperations);
 
   protected abstract void execute();
 
   public void run() {
+    init();
     startReporting();
     execute();
     stopReporting();
   }
 
   /**
-   * @deprecated Use addLogger instead
+   * Initialize the accessor (e.g. calculate ratios of operations)
+   *
+   */
+  protected abstract void init();
+
+  /**
    * @param loggers
    * @return CacheAccessor
+   * @deprecated Use addLogger instead
    */
   @Deprecated
   public CacheAccessor logUsing(StatsLogger... loggers) {
@@ -219,742 +175,29 @@ public abstract class CacheAccessor implements CacheDriver {
     return this;
   }
 
-  public Stats getFinalStats(){
-	  return reporter.getFinalStats().getOverallStats();
+  public Stats getFinalStats() {
+    return reporter.getFinalStats().getOverallStats();
   }
 
-  public StatsNode getFinalStatsNode(){
+  public StatsNode getFinalStatsNode() {
     if (!statistics)
       throw new IllegalStateException("Statistics are not enabled!");
     return reporter.getFinalStats();
   }
 
-  private static long now(){
-  	return System.currentTimeMillis();
+  static long now() {
+    return System.currentTimeMillis();
   }
 
-  protected void startReporting(){
-      if (statistics)
-    	  reporter.startReporting();
+  protected void startReporting() {
+    if (statistics)
+      reporter.startReporting();
   }
 
-  protected void stopReporting(){
-      if (statistics)
-    	  reporter.stopReporting();
+  protected void stopReporting() {
+    if (statistics)
+      reporter.stopReporting();
   }
 
-  static class IndividualCacheAccessor extends CacheAccessor {
 
-	private final Random rnd = new Random();
-
-	private final CacheWrapper cacheWrapper;
-    private int weight = 1;
-
-    private Map<OPERATION, Double> ratios = new ConcurrentHashMap<OPERATION, Double>();
-
-    private final AtomicLong delayInMicros = new AtomicLong();
-
-    private ObjectGenerator keyGenerator;
-    private ObjectGenerator valueGenerator;
-
-    private SequenceGenerator sequenceGenerator;
-
-    private TerminationCondition terminationCondition;
-
-    private Validation validation;
-    private Validation.Mode validationMode;
-
-    public IndividualCacheAccessor(Ehcache cache) {
-      this.cacheWrapper = new CacheWrapperImpl(cache);
-
-      this.ratios.put(GET, 0.0);
-      this.ratios.put(UPDATE, 0.0);
-      this.ratios.put(REMOVE, 0.0);
-      this.ratios.put(REMOVE_ELEMENT, 0.0);
-      this.ratios.put(REPLACE, 0.0);
-      this.ratios.put(REPLACE_ELEMENT, 0.0);
-      this.ratios.put(PUT, 0.0);
-      this.ratios.put(PUT_IF_ABSENT, 0.0);
-    }
-
-    @Override
-    public void run() {
-      double sumOfRatios = this.ratios.get(GET) + this.ratios.get(UPDATE) + this.ratios.get(REMOVE)
-                           + this.ratios.get(REMOVE_ELEMENT) + this.ratios.get(REPLACE)
-                           + this.ratios.get(REPLACE_ELEMENT) + this.ratios.get(PUT)
-                           + this.ratios.get(PUT_IF_ABSENT);
-      if (sumOfRatios > 1.0) {
-        throw new RuntimeException("Sums of ratios is higher than 100%");
-      }
-      if (this.ratios.get(GET) == 0.0) {
-        double sumOfOtherRatios = this.ratios.get(UPDATE) + this.ratios.get(REMOVE) + this.ratios.get(REMOVE_ELEMENT)
-            + this.ratios.get(REPLACE) + this.ratios.get(REPLACE_ELEMENT) + this.ratios.get(PUT)
-            + this.ratios.get(PUT_IF_ABSENT);
-        double remainingRatio = 1.0 - sumOfOtherRatios;
-        this.ratios.put(GET, remainingRatio);
-      }
-      logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
-      super.run();
-    }
-
-    @Override
-    public CacheAccessor andAccess(Ehcache one) {
-      return new MultipleCacheAccessor(this, one);
-    }
-
-    @Override
-    public CacheAccessor sequentially() {
-      return this.sequentially(0);
-    }
-
-    @Override
-    public CacheAccessor sequentially(long offset) {
-      if (sequenceGenerator == null) {
-        sequenceGenerator = new SequentialSequenceGenerator(offset);
-      } else {
-        throw new IllegalStateException("SequenceGenerator already chosen");
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor atRandom(Distribution distribution, long min, long max, long width) {
-      if (sequenceGenerator == null) {
-        sequenceGenerator = new RandomSequenceGenerator(distribution, min, max, width);
-      } else {
-       throw new IllegalStateException("SequenceGenerator already chosen");
-      }
-      return this;
-    }
-
-    /**
-     * Do a get operation and validate the output.
-     * If gets a null, the validation fails
-     *
-     * @param seed
-     * @param validator
-     */
-    private void getStrictOnce(final long seed, final Validator validator) {
-      Object key = keyGenerator.generate(seed);
-      Object value = cacheWrapper.get(key);
-      if (validator == null) {
-        throw new AssertionError("Validator is null");
-      }
-      validator.validate(seed, value);
-    }
-
-    /**
-     * Do a get operation and validate the output.
-     * If gets a null, inserts a new object in place.
-     *
-     * @param seed
-     * @param validator
-     */
-    private void getOnce(long seed, Validator validator) {
-      Object key = keyGenerator.generate(seed);
-      Object value = cacheWrapper.get(key);
-      if (value == null) {
-        cacheWrapper.put(key, valueGenerator.generate(seed));
-      } else if (validator != null) {
-        validator.validate(seed, value);
-      }
-    }
-
-    private void updateOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.put(key, valueGenerator.generate(seed));
-    }
-
-    private void removeOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.remove(key);
-    }
-
-    private void removeElementOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.removeElement(key, valueGenerator.generate(seed));
-    }
-
-    private void replaceOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.replace(key, valueGenerator.generate(seed));
-    }
-
-    private void replaceElementOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.replaceElement(key, valueGenerator.generate(seed), key, valueGenerator.generate(seed));
-    }
-
-    private void putOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.put(key, valueGenerator.generate(seed));
-    }
-
-    private void putIfAbsentOnce(long seed) {
-      Object key = keyGenerator.generate(seed);
-      cacheWrapper.remove(key);         // We remove the Element first so the putIfAbsent will always do a put
-      cacheWrapper.putIfAbsent(key, valueGenerator.generate(seed));
-    }
-
-    /**
-     * Return next operation to execute depending on following <br/>
-     * If {@link Random#nextDouble()} falls in <br/>
-     * 0.0 - {@link #updateRatio} : {@link OPERATION#UPDATE} <br/>
-     * {@link #updateRatio} - {@link #removeRatio} : {@link OPERATION#REMOVE} <br/>
-     * {@link #removeRatio} - 1.0 : {@link OPERATION#GET} <br/>
-     * @return {@link OPERATION}
-     */
-    private OPERATION getNextOperation() {
-      double d = rnd.nextDouble();
-
-      double min = 0;
-      double max = this.ratios.get(UPDATE);
-      if (d <= max)
-        return UPDATE;
-
-      min = max;
-      max = min + this.ratios.get(REMOVE);
-      if (d > min && d <= max)
-        return REMOVE;
-
-      min = max;
-      max = min + this.ratios.get(PUT);
-      if (d > min && d <= max)
-        return PUT;
-
-      min = max;
-      max = min + this.ratios.get(PUT_IF_ABSENT);
-      if (d > min && d <= max)
-        return PUT_IF_ABSENT;
-
-      min = max;
-      max = min + this.ratios.get(REMOVE_ELEMENT);
-      if (d > min && d <= max)
-        return REMOVE_ELEMENT;
-
-      min = max;
-      max = min + this.ratios.get(REPLACE);
-      if (d > min && d <= max)
-        return REPLACE;
-
-      min = max;
-      max = min + this.ratios.get(REPLACE_ELEMENT);
-      if (d > min && d <= max)
-        return REPLACE_ELEMENT;
-
-      if (Validation.Mode.STRICT.equals(this.validationMode))
-        return OPERATION.STRICT_GET;
-      else
-        return GET;
-    }
-
-    /**
-     * executes read/write operation depending on {@link #getNextOperation()}.
-     * It also adds a delay, if any, before doing operation.
-     * @param seed
-     * @param validator
-     */
-    public void runOnce(long seed, Validator validator) {
-      try {
-        TimeUnit.MICROSECONDS.sleep(delayInMicros.get());
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      switch (getNextOperation()) {
-        case STRICT_GET:
-          getStrictOnce(seed, validator);
-          break;
-        case GET:
-          getOnce(seed, validator);
-          break;
-        case UPDATE:
-          updateOnce(seed);
-          break;
-        case REMOVE:
-          removeOnce(seed);
-          break;
-        case REMOVE_ELEMENT:
-          removeElementOnce(seed);
-          break;
-        case REPLACE:
-          replaceOnce(seed);
-          break;
-        case REPLACE_ELEMENT:
-          replaceElementOnce(seed);
-          break;
-        case PUT:
-          putOnce(seed);
-          break;
-        case PUT_IF_ABSENT:
-          putIfAbsentOnce(seed);
-          break;
-      }
-    }
-
-    /**
-	 * Executes the test. Starts {@link StatsReporter} thread and executes
-	 * {@link #runOnce(long, Validator)} till {@link TerminationCondition} is
-	 * met. Stops reporter thread.
-	 */
-	@Override
-	public void execute() {
-      Sequence seeds = sequenceGenerator.createSequence();
-      Condition termination = terminationCondition.createCondition(cacheWrapper);
-
-      Validator validator;
-      if (validation == null) {
-        validator = null;
-      } else {
-        validator = validation.createValidator(valueGenerator);
-      }
-      long start = now();
-      do {
-        runOnce(seeds.next(), validator);
-      } while (!termination.isMet());
-      long stop = now();
-      logger.debug("CacheAccessor operations on caches took: {}ms", stop - start);
-    }
-
-    @Override
-    public CacheAccessor stopAfter(int time, TimeUnit unit) {
-      return terminateOn(new TimedTerminationCondition(time, unit));
-    }
-
-    @Override
-    public CacheAccessor terminateOn(TerminationCondition termination) {
-      if (terminationCondition == null) {
-        terminationCondition = termination;
-      } else {
-    	logger.warn("TerminationCondition already chosen " + this.cacheWrapper.getName());
-//        throw new IllegalStateException("TerminationCondition already chosen");
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor untilFilled() {
-      return terminateOn(new FilledTerminationCondition());
-    }
-
-    @Override
-    public CacheAccessor using(ObjectGenerator keys, ObjectGenerator values) {
-      if (keyGenerator == null) {
-        keyGenerator = keys;
-      } else {
-        throw new IllegalStateException("Key ObjectGenerator already chosen");
-      }
-      if (valueGenerator == null) {
-        valueGenerator = values;
-      } else {
-        throw new IllegalStateException("Value ObjectGenerator already chosen");
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor validate(final Validation.Mode validationMode) {
-      return validateUsing(validationMode, new EqualityValidation());
-    }
-
-    @Override
-    public CacheAccessor validate() {
-      return validate(Validation.Mode.UPDATE);
-    }
-
-    @Override
-    public CacheAccessor validateUsing(Validation validation) {
-      return validateUsing(Validation.Mode.UPDATE, validation);
-    }
-
-    @Override
-    public CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation) {
-      if (this.validation == null) {
-        this.validationMode = validationMode;
-        this.validation = validation;
-      } else {
-        throw new IllegalStateException("Validation already chosen");
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor withWeight(int i) {
-      this.weight = i;
-      return this;
-    }
-
-	@Override
-	public CacheAccessor updateRatio(double updateRatio) {
-		this.ratios.put(UPDATE, updateRatio);
-		return this;
-	}
-
-	@Override
-	public CacheAccessor removeRatio(double removeRatio) {
-    this.ratios.put(REMOVE, removeRatio);
-		return this;
-	}
-
-	@Override
-	public CacheAccessor enableStatistics(boolean enabled) {
-		this.statistics = enabled;
-		cacheWrapper.setStatisticsEnabled(enabled);
-		return this;
-	}
-
-	@Override
-	public CacheAccessor accessPattern(Pattern pattern, int duration,
-			int interval) {
-		throw new IllegalStateException("AccessPattern is not allowed for IndividualCacheAccessor");
-	}
-
-    @Override
-    public CacheAccessor update(final double percentage) {
-      this.ratios.put(UPDATE, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor remove(final double percentage) {
-      this.ratios.put(REMOVE, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor removeElement(final double percentage) {
-      this.ratios.put(REMOVE_ELEMENT, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor replace(final double percentage) {
-      this.ratios.put(REPLACE, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor replaceElement(final double percentage) {
-      this.ratios.put(REPLACE_ELEMENT, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor get(final double percentage) {
-      this.ratios.put(GET, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor put(final double percentage) {
-      this.ratios.put(PUT, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor putIfAbsent(final double percentage) {
-      this.ratios.put(PUT_IF_ABSENT, percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor addThinkTime(long micros) {
-      logger.debug("Delay set to : " + micros);
-      this.delayInMicros.set(micros);
-      return this;
-    }
-
-  }
-
-  static class MultipleCacheAccessor extends CacheAccessor {
-
-    private final List<IndividualCacheAccessor> accessors = new ArrayList<IndividualCacheAccessor>();
-    private AccessPattern accessPattern = null;
-    private TerminationCondition terminationCondition;
-    private static Thread access = null;
-
-    public MultipleCacheAccessor(IndividualCacheAccessor one, Ehcache two) {
-      accessors.add(one);
-      accessors.add(new IndividualCacheAccessor(two));
-    }
-
-    @Override
-    public CacheAccessor andAccess(Ehcache cache) {
-      accessors.add(new IndividualCacheAccessor(cache));
-      return this;
-    }
-
-    @Override
-    public CacheAccessor sequentially() {
-      return this.sequentially(0);
-    }
-
-    @Override
-    public CacheAccessor sequentially(final long offset) {
-      for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
-        try {
-          it.next().sequentially(offset);
-        } catch (IllegalStateException e) {
-          if (!it.hasNext()) {
-            throw e;
-          }
-        }
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor atRandom(Distribution distribution, long min, long max, long width) {
-      for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
-        try {
-          it.next().atRandom(distribution, min, max, width);
-        } catch (IllegalStateException e) {
-          if (!it.hasNext()) {
-            throw e;
-          }
-        }
-      }
-      return this;
-    }
-
-    private IndividualCacheAccessor latestAccessor() {
-      return accessors.get(accessors.size() - 1);
-    }
-
-	@Override
-	public void execute() {
-      if (accessPattern != null)
-    	  accessWithPattern();
-      else
-    	  accessWithWeight();
-    }
-
-	private void accessWithPattern(){
-			synchronized (MultipleCacheAccessor.class) {
-				if (this.accessPattern != null && access == null) {
-					access = new Thread(accessPattern);
-					access.start();
-				}
-			}
-			for (IndividualCacheAccessor a : accessors)
-				a.terminateOn(terminationCondition);
-
-			ParallelDriver driver = new ParallelDriver(accessors);
-			driver.run();
-			if (this.accessPattern != null)
-				access.interrupt();
-
-	}
-
-
-	private void accessWithWeight(){
-	     Collection<CacheWrapper> caches = new ArrayList<CacheWrapper>();
-	      Map<Integer, IndividualCacheAccessor> selection = new HashMap<Integer, IndividualCacheAccessor>();
-	      Map<IndividualCacheAccessor, Sequence> sequences = new IdentityHashMap<IndividualCacheAccessor, Sequence>();
-	      Map<IndividualCacheAccessor, Validator> validators = new IdentityHashMap<IndividualCacheAccessor, Validator>();
-
-	      int totalWeight = 0;
-	      for (IndividualCacheAccessor a : accessors) {
-	        int weight = a.weight;
-	        if (weight <= 0) {
-	          continue;
-	        } else {
-	          selection.put(totalWeight, a);
-	          caches.add(a.cacheWrapper);
-	          sequences.put(a, a.sequenceGenerator.createSequence());
-	          if (a.validation != null) {
-	            validators.put(a, a.validation.createValidator(a.valueGenerator));
-	          }
-	          totalWeight += a.weight;
-	        }
-	      }
-
-	      Random rndm = new Random();
-		  Condition termination = terminationCondition.createCondition(caches
-				.toArray(new CacheWrapper[caches.size()]));
-
-	      long start = now();
-	      do {
-	        int selector = rndm.nextInt(totalWeight);
-	        IndividualCacheAccessor accessor;
-	        while ((accessor = selection.get(selector--)) == null);
-	        accessor.runOnce(sequences.get(accessor).next(), validators.get(accessor));
-	      } while (!termination.isMet());
-	      long stop = now();
-	      logger.debug("CacheAccessor put/get/validate on caches took: {}ms", stop - start);
-	}
-
-    @Override
-    public CacheAccessor stopAfter(int time, TimeUnit unit) {
-      return terminateOn(new TimedTerminationCondition(time, unit));
-    }
-
-    @Override
-    public CacheAccessor terminateOn(TerminationCondition termination) {
-      if (terminationCondition == null) {
-        terminationCondition = termination;
-      } else {
-        throw new IllegalStateException("TerminationCondition already chosen");
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor untilFilled() {
-      return terminateOn(new FilledTerminationCondition());
-    }
-
-    @Override
-    public CacheAccessor using(ObjectGenerator keys, ObjectGenerator values) {
-      for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
-        try {
-          it.next().using(keys, values);
-        } catch (IllegalStateException e) {
-          if (!it.hasNext()) {
-            throw e;
-          }
-        }
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor validateUsing(Validation validation) {
-      return validateUsing(Validation.Mode.UPDATE, validation);
-    }
-
-    @Override
-    public CacheAccessor validate(final Validation.Mode validationMode) {
-      for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
-        try {
-          it.next().validate(validationMode);
-        } catch (IllegalStateException e) {
-          if (!it.hasNext()) {
-            throw e;
-          }
-        }
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor validate() {
-      return validate(Validation.Mode.UPDATE);
-    }
-
-    @Override
-    public CacheAccessor validateUsing(final Validation.Mode validationMode, Validation validation) {
-      for (Iterator<IndividualCacheAccessor> it = accessors.iterator(); it.hasNext(); ) {
-        try {
-          it.next().validateUsing(validationMode, validation);
-        } catch (IllegalStateException e) {
-          if (!it.hasNext()) {
-            throw e;
-          }
-        }
-      }
-      return this;
-    }
-
-    @Override
-    public CacheAccessor withWeight(int i) {
-      latestAccessor().withWeight(i);
-      return this;
-    }
-
-    @Override
-    @Deprecated
-    public CacheAccessor updateRatio(double updateRatio) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.updateRatio(updateRatio);
-      return this;
-    }
-
-    @Override
-    @Deprecated
-    public CacheAccessor removeRatio(double removeRatio) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.removeRatio(removeRatio);
-      return this;
-    }
-
-	@Override
-	public CacheAccessor enableStatistics(boolean statistics) {
-		this.statistics = statistics;
-		for (IndividualCacheAccessor accessor : accessors)
-			accessor.enableStatistics(statistics);
-	  return this;
-	}
-
-	@Override
-	public CacheAccessor accessPattern(Pattern pattern, int duration,
-			int interval) {
-		accessPattern = AccessPattern.create(pattern).setDuration(
-					duration).setInterval(interval).setAccessors(accessors);
-		return this;
-	}
-
-    @Override
-    public CacheAccessor update(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.update(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor remove(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.remove(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor removeElement(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.removeElement(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor replace(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.replace(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor replaceElement(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.replaceElement(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor get(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.get(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor put(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.put(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor putIfAbsent(final double percentage) {
-      for (IndividualCacheAccessor individualCacheAccessor : accessors)
-        individualCacheAccessor.putIfAbsent(percentage);
-      return this;
-    }
-
-    @Override
-    public CacheAccessor addThinkTime(long micros) {
-      for (IndividualCacheAccessor accessor : accessors)
-        accessor.addThinkTime(micros);
-      return this;
-    }
-
-  }
 }

@@ -1,12 +1,11 @@
 package org.terracotta.ehcache.testing.driver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.driver.CacheAccessor.IndividualCacheAccessor;
 
 
 public abstract class AccessPattern implements Runnable {

@@ -47,7 +47,8 @@ public class SimpleMultipleCacheTest {
 
   @Test
   public void testSimpleAccessor() {
-    CacheManager manager = new CacheManager(new Configuration().name("testSimpleAccessor").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+    CacheManager manager = new CacheManager(new Configuration().name("testSimpleAccessor")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
         .defaultCache(new CacheConfiguration("default", 0)));
 
     try {
@@ -60,8 +61,7 @@ public class SimpleMultipleCacheTest {
           .andAccess(three)
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
-          .stopAfter(10, TimeUnit.SECONDS)
-          ;
+          .stopAfter(10, TimeUnit.SECONDS);
       accessor.run();
       Assert.assertTrue(one.getSize() > 0);
       Assert.assertTrue(two.getSize() > 0);

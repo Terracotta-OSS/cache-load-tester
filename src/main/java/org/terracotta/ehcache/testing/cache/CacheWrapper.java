@@ -50,7 +50,7 @@ public interface CacheWrapper {
 
   boolean removeElement(Object key, final Object value);
 
-  Element replace(Object key, Object value);
+  Element replace(Object key, Object newValue);
 
   boolean replaceElement(Object oldKey, Object oldValue, final Object newKey, final Object newValue);
 

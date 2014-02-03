@@ -21,6 +21,8 @@ import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
+
 public class SimpleAccessWithStatsTest {
 
   @Test
@@ -41,7 +43,7 @@ public class SimpleAccessWithStatsTest {
 
     CacheAccessor access = CacheAccessor.access(cache1, cache2)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
-        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.02)
+        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).doOps(update(0.02))
         .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
         .addLogger(new CsvStatsLoggerImpl("target/logs-example-access.csv"));
     ParallelDriver.inParallel(4, access).run();
@@ -70,7 +72,7 @@ public class SimpleAccessWithStatsTest {
 
     CacheAccessor access = CacheAccessor.access(cache1, cache2)
          .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
-         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).update(0.2).remove(0.2).putIfAbsent(0.6)
+         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).doOps(update(0.2), remove(0.2), putIfAbsent(0.6))
          .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
          .addLogger(new ConsoleStatsLoggerImpl());
 

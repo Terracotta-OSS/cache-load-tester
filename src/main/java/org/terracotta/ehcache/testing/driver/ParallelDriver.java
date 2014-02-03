@@ -93,7 +93,7 @@ public class ParallelDriver implements CacheDriver {
     public String getMessage() {
       StringBuilder sb = new StringBuilder();
 
-      sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
+      sb.append("WARNING (cache-load-tester project) - This is a composite StackTrace holding all Thread StackTraces: \n");
       for (Map.Entry<Future, Throwable> entry : causes.entrySet()) {
         sb.append("Throwable exception").append(NEW_LINE)
             .append(entry.getKey().toString()).append(NEW_LINE)
@@ -108,7 +108,7 @@ public class ParallelDriver implements CacheDriver {
     public String getLocalizedMessage() {
       StringBuilder sb = new StringBuilder();
 
-      sb.append("WARNING (QA ehcache-test-loading project) - This is a composite StackTrace holding all Thread StackTraces: \n");
+      sb.append("WARNING (cache-load-tester project) - This is a composite StackTrace holding all Thread StackTraces: \n");
       for (Map.Entry<Future, Throwable> entry : causes.entrySet()) {
         sb.append("Throwable exception").append(NEW_LINE)
             .append(entry.getKey().toString()).append(NEW_LINE)
