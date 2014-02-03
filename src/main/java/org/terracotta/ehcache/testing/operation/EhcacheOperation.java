@@ -99,6 +99,23 @@ public class EhcacheOperation {
     };
   }
 
+  public static CacheOperation putWithWriter(final double ratio) {
+
+    return new CacheOperation(ratio) {
+
+      @Override
+      public Void exec(final long seed, final ObjectGenerator keyGenerator, final ObjectGenerator valueGenerator, final Validation.Validator validator) {
+        cache.putWithWriter(keyGenerator.generate(seed), valueGenerator.generate(seed));
+        return null;
+      }
+
+      @Override
+      public OPERATIONS getName() {
+        return OPERATIONS.PUT_WITH_WRITER;
+      }
+    };
+  }
+
   public static CacheOperation replaceElement(final double ratio) {
 
     return new CacheOperation(ratio) {

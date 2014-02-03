@@ -32,13 +32,15 @@ public interface CacheWrapper {
    */
   void put(Object key, Object value);
 
-  /**
-   * Put if key is absent
-   *
-   * @param key
-   * @param value
-   * @return value
-   */
+  void putWithWriter(final Object key, final Object value);
+
+    /**
+     * Put if key is absent
+     *
+     * @param key
+     * @param value
+     * @return value
+     */
   Object putIfAbsent(Object key, Object value);
 
   /**

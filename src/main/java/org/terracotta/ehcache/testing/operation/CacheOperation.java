@@ -9,7 +9,7 @@ public abstract class CacheOperation<T> {
   private Validation.Mode validationMode;
 
   public enum OPERATIONS {
-    GET, UPDATE, REMOVE, REMOVE_ELEMENT, REPLACE, REPLACE_ELEMENT, PUT, PUT_IF_ABSENT;
+    GET, UPDATE, REMOVE, REMOVE_ELEMENT, REPLACE, REPLACE_ELEMENT, PUT, PUT_IF_ABSENT, PUT_WITH_WRITER;
   }
 
   CacheWrapper cache;

@@ -3,6 +3,7 @@ package org.terracotta.ehcache.testing.cache;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
+import net.sf.ehcache.constructs.nonstop.RejoinCacheException;
 
 /**
  * @author Vivek Verma
@@ -34,6 +35,8 @@ public class ControlledThroughputCacheWriterWrapper extends CacheWrapperImpl {
     long start = (statistics) ? now() : 0;
     try {
       cache.put(new Element(key, value));
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
     } catch (NonStopCacheException nsce) {
       writeStats.incrementTotalExceptionCount();
     }

@@ -5,9 +5,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.terracotta</groupId>
-  <artifactId>ehcache-test-loading</artifactId>
+  <artifactId>cache-load-tester</artifactId>
   <packaging>jar</packaging>
-  <name>ehcache-test-loading</name>
+  <name>cache-load-tester</name>
   <version>1.1.0-SNAPSHOT</version>
   <description>A test framework to load testing caches</description>
 

@@ -46,6 +46,22 @@ public class CacheWrapperImpl implements CacheWrapper {
   }
 
   @Override
+  public void putWithWriter(final Object key, final Object value) {
+    long start = (statistics) ? now() : 0;
+    try {
+      cache.putWithWriter(new Element(key, value));
+    } catch (RejoinCacheException rce) {
+      writeStats.incrementTotalExceptionCount();
+    } catch (NonStopCacheException nsce) {
+      writeStats.incrementTotalExceptionCount();
+    }
+    long end = (statistics) ? now() : 0;
+    if (statistics) {
+      writeStats.add(end - start);
+    }
+  }
+
+  @Override
 	public Object putIfAbsent(Object key, Object value) {
     long start = (statistics) ? now() : 0;
     Element element = null;
