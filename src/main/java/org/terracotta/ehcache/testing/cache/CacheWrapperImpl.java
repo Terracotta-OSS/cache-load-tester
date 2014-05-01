@@ -178,8 +178,8 @@ public class CacheWrapperImpl implements CacheWrapper {
 	 */
 	public void setStatisticsEnabled(boolean statistics) {
 		this.statistics = statistics;
-		if (statistics)
-			StatsReporter.getInstance().register(this.cache, this);
+//		if (statistics)
+//			StatsReporter.getInstance().register(this.cache, this);
 	}
 
 	protected static long now() {

@@ -3,8 +3,7 @@ package org.terracotta.ehcache.testing.driver;
 import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
-import org.terracotta.ehcache.testing.cache.CacheWrapperImpl;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
@@ -12,11 +11,14 @@ import org.terracotta.ehcache.testing.sequencegenerator.RandomSequenceGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.SequenceGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.SequentialSequenceGenerator;
 import org.terracotta.ehcache.testing.termination.FilledTerminationCondition;
+import org.terracotta.ehcache.testing.termination.IterationTerminationCondition;
 import org.terracotta.ehcache.testing.termination.TerminationCondition;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 import org.terracotta.ehcache.testing.validator.EqualityValidation;
 import org.terracotta.ehcache.testing.validator.Validation;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
@@ -25,15 +27,27 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.get;
 
+/**
+ * This is the implementation of the CacheAccessor to do operations on one Cache.
+ * When using multiple caches, see {@link MultipleCacheAccessor}.
+ *
+ * @author Chris Dennis
+ * @author Aurelien Broszniowski
+ * @author Himadri Singh
+ * @author Sandeep Bansal
+ * @author Sanjay Bansal
+ * @author Vivek Verma
+ */
+
 public class IndividualCacheAccessor extends CacheAccessor {
   private static Logger logger = LoggerFactory.getLogger(IndividualCacheAccessor.class);
 
   private final Random rnd = new Random();
 
-  private final CacheWrapper cacheWrapper;
-  private int weight = 1;
+  private final GenericCacheWrapper cacheWrapper;
+  private int weight = 0;
 
-  private Set<CacheOperation> ratios = new LinkedHashSet<CacheOperation>();
+  private Set<CacheOperation> operations = new LinkedHashSet<CacheOperation>();
 
   private final AtomicLong delayInMicros = new AtomicLong();
 
@@ -47,8 +61,8 @@ public class IndividualCacheAccessor extends CacheAccessor {
   private Validation validation;
   private Validation.Mode validationMode;
 
-  public IndividualCacheAccessor(Ehcache cache) {
-    this.cacheWrapper = new CacheWrapperImpl(cache);
+  public IndividualCacheAccessor(GenericCacheWrapper cacheWrapper) {
+    this.cacheWrapper = cacheWrapper;
   }
 
   @Override
@@ -56,12 +70,12 @@ public class IndividualCacheAccessor extends CacheAccessor {
     double sumOfRatios = checkRatios();
     calculateGetRatio(sumOfRatios);
 
-    for (CacheOperation operation : ratios) {
-      operation.setCache(this.cacheWrapper);
+    for (Iterator<CacheOperation> iterator = operations.iterator(); iterator.hasNext(); ) {
+      final CacheOperation operation = iterator.next();
       operation.setValidationMode(this.validationMode);
     }
 
-    logger.info("-- CacheAccessor operations percentages: {}", ratios.toString());
+    logger.info("-- CacheAccessor operations percentages: {}", operations.toString());
   }
 
   /**
@@ -73,22 +87,23 @@ public class IndividualCacheAccessor extends CacheAccessor {
    */
   private void calculateGetRatio(final double sumOfRatios) {
     boolean getIsDefined = false;
-    for (CacheOperation ratio : ratios) {
+    for (CacheOperation ratio : operations) {
       if (ratio.getName() == CacheOperation.OPERATIONS.GET) {
         getIsDefined = true;
         break;
       }
     }
+    // @TODO : remove the dependency to an Ehcache operation. Actually if no op is defined, we might want
+    // to throw an exception instead
     if (!getIsDefined) {
       final CacheOperation operation = get(1.0 - sumOfRatios);
-      operation.setCache(cacheWrapper);
-      ratios.add(operation);
+      operations.add(operation);
     }
   }
 
   private double checkRatios() {
     double sumOfRatios = 0.0;
-    for (CacheOperation ratio : ratios) {
+    for (CacheOperation ratio : operations) {
       sumOfRatios += ratio.getRatio();
     }
     if (sumOfRatios > 1.0) {
@@ -98,8 +113,8 @@ public class IndividualCacheAccessor extends CacheAccessor {
   }
 
   @Override
-  public CacheAccessor andAccess(Ehcache one) {
-    return new MultipleCacheAccessor(this, one);
+  public CacheAccessor andAccess(GenericCacheWrapper one) {
+    return new MultipleCacheAccessor(this, new IndividualCacheAccessor(one));
   }
 
   @Override
@@ -144,12 +159,13 @@ public class IndividualCacheAccessor extends CacheAccessor {
     double d = rnd.nextDouble();
     double min, max = 0.0;
 
-    for (CacheOperation operation : ratios) {
+    for (CacheOperation operation : operations) {
       min = max;
       max = min + operation.getRatio();
 
+      //TODO : doesnt need to pass the seed since it's already in cachewrapper's generator, validator either?
       if (d >= min && d < max)
-        operation.exec(seed, keyGenerator, valueGenerator, validator);
+        operation.exec(cacheWrapper, seed, keyGenerator, valueGenerator, validator);
     }
   }
 
@@ -195,6 +211,11 @@ public class IndividualCacheAccessor extends CacheAccessor {
   @Override
   public CacheAccessor untilFilled() {
     return terminateOn(new FilledTerminationCondition());
+  }
+
+  @Override
+  public CacheAccessor iterate(long nbIterations) {
+    return terminateOn(new IterationTerminationCondition(nbIterations));
   }
 
   @Override
@@ -258,9 +279,7 @@ public class IndividualCacheAccessor extends CacheAccessor {
 
   @Override
   public CacheAccessor doOps(final CacheOperation... cacheOperations) {
-    for (CacheOperation operation : cacheOperations) {
-      ratios.add(operation);
-    }
+    Collections.addAll(operations, cacheOperations);
     return this;
   }
 
@@ -275,7 +294,7 @@ public class IndividualCacheAccessor extends CacheAccessor {
     return weight;
   }
 
-  public CacheWrapper getCacheWrapper() {
+  public GenericCacheWrapper getCacheWrapper() {
     return cacheWrapper;
   }
 

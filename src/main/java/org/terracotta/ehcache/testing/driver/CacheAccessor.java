@@ -1,8 +1,6 @@
 package org.terracotta.ehcache.testing.driver;
 
-import net.sf.ehcache.Ehcache;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.driver.AccessPattern.Pattern;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.operation.CacheOperation;
@@ -16,16 +14,26 @@ import org.terracotta.ehcache.testing.validator.Validation;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The CacheAccessor is the main class of the cache loader API. Its responsibilities are to
+ *   - configure the cache load test
+ *   - execute the cache load test
+ *
+ * @author Chris Dennis
+ * @author Aurelien Broszniowski
+ * @author Himadri Singh
+ *
+ */
 public abstract class CacheAccessor implements CacheDriver {
   private final StatsReporter reporter = StatsReporter.getInstance();
 
   protected boolean statistics = false;
 
-  public static CacheAccessor access(Ehcache... caches) {
+  public static CacheAccessor access(GenericCacheWrapper... caches) {
     CacheAccessor accessor = new IndividualCacheAccessor(caches[0]);
 
     for (int i = 1, cachesLength = caches.length; i < cachesLength; i++) {
-      final Ehcache cache = caches[i];
+      final GenericCacheWrapper cache = caches[i];
       accessor = accessor.andAccess(cache);
     }
     return accessor;
@@ -34,20 +42,20 @@ public abstract class CacheAccessor implements CacheDriver {
   /**
    * Add ehcache to be accessed
    *
-   * @param one Ehcache
+   * @param cacheWrapper
    * @return this
    */
-  public static CacheAccessor access(Ehcache one) {
-    return new IndividualCacheAccessor(one);
+  public static CacheAccessor access(GenericCacheWrapper cacheWrapper) {
+    return new IndividualCacheAccessor(cacheWrapper);
   }
 
   /**
    * Add access to multiple caches
    *
-   * @param one
+   * @param cacheWrapper
    * @return this
    */
-  public abstract CacheAccessor andAccess(Ehcache one);
+  public abstract CacheAccessor andAccess(GenericCacheWrapper cacheWrapper);
 
   /**
    * Access the caches sequentially
@@ -101,6 +109,8 @@ public abstract class CacheAccessor implements CacheDriver {
    * @return this
    */
   public abstract CacheAccessor untilFilled();
+
+  public abstract CacheAccessor iterate(long nbIterations);
 
   /**
    * Terminate when {@link TerminationCondition} is met.
@@ -160,23 +170,13 @@ public abstract class CacheAccessor implements CacheDriver {
   protected abstract void init();
 
   /**
-   * @param loggers
+   * @param logger
    * @return CacheAccessor
-   * @deprecated Use addLogger instead
    */
-  @Deprecated
-  public CacheAccessor logUsing(StatsLogger... loggers) {
-    reporter.logUsing(loggers);
-    return this;
-  }
 
   public CacheAccessor addLogger(StatsLogger logger) {
     reporter.addLogger(logger);
     return this;
-  }
-
-  public Stats getFinalStats() {
-    return reporter.getFinalStats().getOverallStats();
   }
 
   public StatsNode getFinalStatsNode() {

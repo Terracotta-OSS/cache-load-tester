@@ -5,11 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import net.sf.ehcache.Status;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 
 
 public class MemoryStatsCollector implements Runnable {
@@ -22,13 +20,13 @@ public class MemoryStatsCollector implements Runnable {
   private final long waitingInterval = TimeUnit.SECONDS.toMillis(reportPeriod * 2);
 
   public  volatile boolean running         = true;
-  private  Collection<CacheWrapper> cacheWrapperMap;
+  private Collection<GenericCacheWrapper> cacheWrapperMap;
 
-  public MemoryStatsCollector(final Collection<CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector(final Collection<GenericCacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
   }
 
-  public MemoryStatsCollector cacheWrappers(Collection<CacheWrapper> cacheWrapperMap) {
+  public MemoryStatsCollector cacheWrappers(Collection<GenericCacheWrapper> cacheWrapperMap) {
     this.cacheWrapperMap = cacheWrapperMap;
     return this;
   }
@@ -39,19 +37,9 @@ public class MemoryStatsCollector implements Runnable {
         logger.info("----------- Memory -----------");
 
         // Get non-duplicate set of the ehcaches
-        Map<String, CacheWrapper> caches = new HashMap<String, CacheWrapper>();
-        for (CacheWrapper cacheWrapper : cacheWrapperMap)
-            caches.put(cacheWrapper.getCache().getName(), cacheWrapper);
 
-        for (CacheWrapper cacheWrapper: caches.values()) {
-          if (Status.STATUS_ALIVE.equals(cacheWrapper.getCache().getStatus())) {
-            logger.info("Cache name = {} \t\t OnHeap={}Kb \t\t OffHeap={}Kb \t\t OnDisk={}Kb", new Object[] {
-                cacheWrapper.getName(),
-                cacheWrapper.getOnHeapSize(),
-                cacheWrapper.getOffHeapSize(),
-                cacheWrapper.getOnDiskSize()
-            });
-          }
+        for (GenericCacheWrapper cacheWrapper : cacheWrapperMap) {
+          cacheWrapper.logMemoryInfo(logger);
         }
         logger.info("------------------------------");
 

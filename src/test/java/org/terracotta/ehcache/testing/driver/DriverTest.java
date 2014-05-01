@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.Assert;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 
 /**
  * @author Aurelien Broszniowski
@@ -35,7 +36,7 @@ public class DriverTest {
             .cache(new CacheConfiguration().name("parallel").maxBytesLocalHeap(64, MemoryUnit.MEGABYTES))
     );
     Cache parallel = manager.getCache("parallel");
-    CacheDriver loadParallel = CacheLoader.load(parallel)
+    CacheDriver loadParallel = CacheLoader.load(ehcache(parallel))
         .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
         .sequentially()
         .untilFilled();
@@ -63,7 +64,7 @@ public class DriverTest {
     Cache sequential = manager.getCache("sequential");
     Cache parallel = manager.getCache("parallel");
 
-    CacheDriver loadSequential = CacheLoader.load(sequential)
+    CacheDriver loadSequential = CacheLoader.load(ehcache(sequential))
         .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
         .sequentially()
         .untilFilled();
@@ -72,7 +73,7 @@ public class DriverTest {
     long seqOffHeapSize = sequential.getStatistics().getLocalOffHeapSize();
     long seqDiskSize = sequential.getStatistics().getLocalDiskSize();
 
-    CacheDriver loadParallel = CacheLoader.load(parallel)
+    CacheDriver loadParallel = CacheLoader.load(ehcache(parallel))
         .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
         .sequentially()
         .untilFilled();

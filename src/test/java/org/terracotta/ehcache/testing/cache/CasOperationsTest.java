@@ -19,7 +19,10 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.get;
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.put;
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.putIfAbsent;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.remove;
 
 public class CasOperationsTest {
@@ -33,12 +36,12 @@ public class CasOperationsTest {
       Ehcache one = manager.addCacheIfAbsent("one");
 
       System.out.println("cache size = " + one.getSize());
-      CacheDriver load = CacheLoader.load(one).put(0.50).putIfAbsent(0.50)
+      CacheDriver load = CacheLoader.load(ehcache(one)).doOps(put(0.50), putIfAbsent(0.50))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).sequentially().untilFilled();
       load.run();
       System.out.println("cache size = " + one.getSize());
 
-      CacheDriver access = CacheAccessor.access(one) //CACHES.ehcache( )   / CACHES.jsr107( )
+      CacheDriver access = CacheAccessor.access(ehcache(one)) //CACHES.ehcache( )   / CACHES.jsr107( )
           .doOps(get(0.75), remove(0.05))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)

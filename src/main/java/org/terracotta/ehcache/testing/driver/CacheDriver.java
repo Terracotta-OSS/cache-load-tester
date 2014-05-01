@@ -1,26 +1,28 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing.driver;
 
-import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
 
 public interface CacheDriver extends Runnable {
 
-  enum OPERATION {
-    STRICT_GET, GET, UPDATE, REMOVE, REMOVE_ELEMENT, REPLACE, REPLACE_ELEMENT, PUT, PUT_IF_ABSENT;
-  }
-
   /**
-	 * @deprecated use getFinalStatsNode() to get collective stats of
-	 *             reads/writes/overall
-	 * @return Overall Final Stats
-	 */
-	@Deprecated
-	public Stats getFinalStats();
-
-	/**
-	 *
-	 * @return Node Stats which contains reads/writes/overall stats
-	 */
-	public StatsNode getFinalStatsNode();
+   *
+   * @return Node Stats which contains reads/writes/overall stats
+   */
+  public StatsNode getFinalStatsNode();
 
 }

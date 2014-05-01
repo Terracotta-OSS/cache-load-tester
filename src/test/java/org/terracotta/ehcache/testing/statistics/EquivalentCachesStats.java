@@ -7,6 +7,7 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.ParallelDriver;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
@@ -17,6 +18,7 @@ import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
 
 /**
@@ -83,7 +85,7 @@ public class EquivalentCachesStats {
   }
 
   private void accessAndStats(final Cache cache) {
-    CacheAccessor access = CacheAccessor.access(cache)
+    CacheAccessor access = CacheAccessor.access(ehcache(cache))
         .enableStatistics(true)
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 1000000, 100000).doOps(update(0.1))

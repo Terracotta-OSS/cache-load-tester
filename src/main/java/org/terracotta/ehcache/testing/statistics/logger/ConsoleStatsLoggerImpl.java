@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
 
@@ -130,7 +130,7 @@ public class ConsoleStatsLoggerImpl implements StatsLogger {
 	5000-PLUS frequency count = 0 percentage = 0.0
 	    */
 
-  public void logMainHeader(final Collection<CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Collection<GenericCacheWrapper> cacheWrapperMap, final String[] titles) {
     logger.info("---------------------------- starting to log performances ----------------------------");
   }
 }

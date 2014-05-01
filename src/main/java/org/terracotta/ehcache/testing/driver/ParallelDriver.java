@@ -120,17 +120,6 @@ public class ParallelDriver implements CacheDriver {
 
   }
 
-  /**
-   * @see CacheDriver
-   */
-  @Deprecated
-  public Stats getFinalStats() {
-    Iterator<? extends CacheDriver> iterator = drivers.iterator();
-    if (iterator.hasNext())
-      return iterator.next().getFinalStats();
-    return null;
-  }
-
   public StatsNode getFinalStatsNode() {
     Iterator<? extends CacheDriver> iterator = drivers.iterator();
     if (iterator.hasNext())

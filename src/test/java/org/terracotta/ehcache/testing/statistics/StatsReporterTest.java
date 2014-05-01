@@ -7,6 +7,7 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
 
 public class StatsReporterTest {
@@ -39,11 +41,11 @@ public class StatsReporterTest {
       Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
       CacheLoader loader = CacheLoader
-          .load(cache1, cache2)
-          .using(StringGenerator.integers(),
-              ByteArrayGenerator.randomSize(300, 1200))
-          .enableStatistics(true).sequentially().iterate(10000)
-          .addLogger(new ConsoleStatsLoggerImpl());
+          .load(ehcache(cache1, cache2))
+              .using(StringGenerator.integers(),
+                  ByteArrayGenerator.randomSize(300, 1200))
+              .enableStatistics(true).sequentially().iterate(10000)
+              .addLogger(new ConsoleStatsLoggerImpl());
 
       CacheDriver driver = ParallelDriver.inParallel(8, loader);
       driver.run();
@@ -71,7 +73,7 @@ public class StatsReporterTest {
       Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
       CacheLoader loader = CacheLoader
-          .load(cache1, cache2)
+          .load(ehcache(cache1, cache2))
           .using(StringGenerator.integers(),
               ByteArrayGenerator.randomSize(300, 1200))
           .enableStatistics(true).sequentially().iterate(10000)
@@ -81,7 +83,7 @@ public class StatsReporterTest {
       Assert.assertEquals(10000, cache2.getSize());
 
       CacheAccessor access = CacheAccessor
-          .access(cache1, cache2)
+          .access(ehcache(cache1, cache2))
           .using(StringGenerator.integers(),
               ByteArrayGenerator.randomSize(300, 1200))
           .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)
@@ -121,7 +123,7 @@ public class StatsReporterTest {
       Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
       CacheLoader loader = CacheLoader
-          .load(cache1, cache2)
+          .load(ehcache(cache1, cache2))
           .using(StringGenerator.integers(),
               ByteArrayGenerator.randomSize(300, 1200))
           .enableStatistics(true).sequentially().iterate(10000)
@@ -132,7 +134,7 @@ public class StatsReporterTest {
 
       for (int i = 0; i < 3; i++) {
         CacheAccessor access = CacheAccessor
-            .access(cache1, cache2)
+            .access(ehcache(cache1, cache2))
             .using(StringGenerator.integers(),
                 ByteArrayGenerator.randomSize(300, 1200))
             .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000)

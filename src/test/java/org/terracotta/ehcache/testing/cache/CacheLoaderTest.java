@@ -13,6 +13,10 @@ import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 
 import junit.framework.Assert;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.put;
+import static org.terracotta.ehcache.testing.operation.EhcacheOperation.putIfAbsent;
+
 public class CacheLoaderTest {
 
   @Test(expected = RuntimeException.class)
@@ -22,8 +26,7 @@ public class CacheLoaderTest {
         .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver load = CacheLoader.load(one)
-          .put(0.50).putIfAbsent(0.51)
+      CacheDriver load = CacheLoader.load(ehcache(one)).doOps(put(0.50), putIfAbsent(0.51))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .sequentially()
           .untilFilled();

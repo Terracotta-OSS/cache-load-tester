@@ -1,7 +1,7 @@
 package org.terracotta.ehcache.testing.statistics.logger;
 
 import au.com.bytecode.opencsv.CSVWriter;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
 
@@ -74,10 +74,10 @@ public class CsvStatsLoggerImpl implements StatsLogger {
     logToCSV(statsList.toArray(new String[statsList.size()]));
   }
 
-  public void logMainHeader(final Collection<CacheWrapper> cacheWrapperMap, final String[] titles) {
+  public void logMainHeader(final Collection<GenericCacheWrapper> cacheWrapperMap, final String[] titles) {
     List<String> headers = new ArrayList<String>();
     headers.add("TimeStamp");
-    for (CacheWrapper cache : cacheWrapperMap) {
+    for (GenericCacheWrapper cache : cacheWrapperMap) {
       for (String title : titles)
         headers.add(cache.getName() + "_" + title);
     }

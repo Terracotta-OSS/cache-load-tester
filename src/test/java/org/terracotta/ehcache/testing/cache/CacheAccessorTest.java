@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
 
 public class CacheAccessorTest {
@@ -29,7 +30,7 @@ public class CacheAccessorTest {
         .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheAccessor accessor = CacheAccessor.access(one)
+      CacheAccessor accessor = CacheAccessor.access(ehcache(one))
           .doOps(putIfAbsent(0.20), put(0.20), get(0.20),
               update(0.20),
               remove(0.21), replaceElement(0.10), replace(0.11),
@@ -51,7 +52,7 @@ public class CacheAccessorTest {
         .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheAccessor accessor = CacheAccessor.access(one).enableStatistics(true)
+      CacheAccessor accessor = CacheAccessor.access(ehcache(one)).enableStatistics(true)
           .doOps(putIfAbsent(0.10), put(0.10), update(0.10), remove(0.10),
               replaceElement(0.10), replace(0.10), removeElement(0.05))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))

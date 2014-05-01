@@ -10,6 +10,7 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 
 import org.junit.Test;
+import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
 
@@ -26,7 +27,7 @@ public class GenericGeneratorTest {
     try {
       Ehcache cache = manager.addCacheIfAbsent("someCache");
       final int nbIterations = 100;
-      CacheDriver load = CacheLoader.load(cache)
+      CacheDriver load = CacheLoader.load(CACHES.ehcache(cache))
           .using(StringGenerator.integers(),
               new ObjectGenerator() {
                 public Object generate(final long seed) {

@@ -6,6 +6,7 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Test;
+import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
@@ -16,6 +17,8 @@ import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
+
+import static org.terracotta.ehcache.testing.cache.CACHES.*;
 
 /**
  * Made by aurbrsz / 7/5/11 - 12:21
@@ -32,7 +35,7 @@ public class SimpleMultipleCacheTest {
       Ehcache two = manager.addCacheIfAbsent("two");
       Ehcache three = manager.addCacheIfAbsent("three");
 
-      CacheDriver load = CacheLoader.load(one, two, three)
+      CacheDriver load = CacheLoader.load(ehcache(one, two, three))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .sequentially()
           .untilFilled();
@@ -56,9 +59,9 @@ public class SimpleMultipleCacheTest {
       Ehcache two = manager.addCacheIfAbsent("two");
       Ehcache three = manager.addCacheIfAbsent("three");
 
-      CacheAccessor accessor = CacheAccessor.access(one)
-          .andAccess(two)
-          .andAccess(three)
+      CacheAccessor accessor = CacheAccessor.access(ehcache(one))
+          .andAccess(ehcache(two))
+          .andAccess(ehcache(three))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
           .stopAfter(10, TimeUnit.SECONDS);
@@ -81,7 +84,7 @@ public class SimpleMultipleCacheTest {
       Ehcache two = manager.addCacheIfAbsent("two");
       Ehcache three = manager.addCacheIfAbsent("three");
 
-      CacheAccessor accessor = CacheAccessor.access(one, two, three)
+      CacheAccessor accessor = CacheAccessor.access(ehcache(one, two, three))
           .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
           .stopAfter(10, TimeUnit.SECONDS);

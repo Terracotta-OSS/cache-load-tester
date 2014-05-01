@@ -1,14 +1,14 @@
 package org.terracotta.ehcache.testing.driver;
 
-import net.sf.ehcache.Ehcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.sequencegenerator.SequenceGenerator;
 import org.terracotta.ehcache.testing.termination.FilledTerminationCondition;
+import org.terracotta.ehcache.testing.termination.IterationTerminationCondition;
 import org.terracotta.ehcache.testing.termination.TerminationCondition;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 import org.terracotta.ehcache.testing.validator.Validation;
@@ -23,6 +23,20 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static org.terracotta.ehcache.testing.termination.TerminationCondition.Condition;
+
+/**
+ * This is the implementation of the CacheAccessor to do operations on multiple Caches.
+ * This is basically a List of {@link IndividualCacheAccessor}.
+ *
+ * @author Chris Dennis
+ * @author Aurelien Broszniowski
+ * @author Himadri Singh
+ * @author Sandeep Bansal
+ * @author Sanjay Bansal
+ * @author Vivek Verma
+ */
+
 public class MultipleCacheAccessor extends CacheAccessor {
   private static Logger logger = LoggerFactory.getLogger(MultipleCacheAccessor.class);
 
@@ -31,9 +45,9 @@ public class MultipleCacheAccessor extends CacheAccessor {
   private TerminationCondition terminationCondition;
   private static Thread access = null;
 
-  public MultipleCacheAccessor(IndividualCacheAccessor one, Ehcache two) {
+  public MultipleCacheAccessor(IndividualCacheAccessor one, IndividualCacheAccessor two) {
     accessors.add(one);
-    accessors.add(new IndividualCacheAccessor(two));
+    accessors.add(two);
   }
 
   @Override
@@ -43,7 +57,7 @@ public class MultipleCacheAccessor extends CacheAccessor {
   }
 
   @Override
-  public CacheAccessor andAccess(Ehcache cache) {
+  public CacheAccessor andAccess(GenericCacheWrapper cache) {
     accessors.add(new IndividualCacheAccessor(cache));
     return this;
   }
@@ -89,8 +103,33 @@ public class MultipleCacheAccessor extends CacheAccessor {
   public void execute() {
     if (accessPattern != null)
       accessWithPattern();
-    else
+    else if (cachesHaveWeight())
       accessWithWeight();
+    else
+      accessSimple();
+  }
+
+  private boolean cachesHaveWeight() {
+    boolean cachesHaveWeight = false;
+    for (IndividualCacheAccessor a : accessors) {
+      cachesHaveWeight |= (a.getWeight() != 0);
+    }
+    return cachesHaveWeight;
+  }
+
+  private void accessSimple() {
+    Collection<GenericCacheWrapper> caches = new ArrayList<GenericCacheWrapper>();
+    Map<IndividualCacheAccessor, Validation.Validator> validators = new IdentityHashMap<IndividualCacheAccessor, Validation.Validator>();
+
+    for (IndividualCacheAccessor a : accessors) {
+      caches.add(a.getCacheWrapper());
+      if (a.getValidation() != null) {
+        validators.put(a, a.getValidation().createValidator(a.getValueGenerator()));
+      }
+    }
+
+    ParallelDriver driver = new ParallelDriver(accessors);
+    driver.run();
   }
 
   private void accessWithPattern() {
@@ -110,7 +149,7 @@ public class MultipleCacheAccessor extends CacheAccessor {
   }
 
   private void accessWithWeight() {
-    Collection<CacheWrapper> caches = new ArrayList<CacheWrapper>();
+    Collection<GenericCacheWrapper> caches = new ArrayList<GenericCacheWrapper>();
     Map<Integer, IndividualCacheAccessor> selection = new HashMap<Integer, IndividualCacheAccessor>();
     Map<IndividualCacheAccessor, SequenceGenerator.Sequence> sequences = new IdentityHashMap<IndividualCacheAccessor, SequenceGenerator.Sequence>();
     Map<IndividualCacheAccessor, Validation.Validator> validators = new IdentityHashMap<IndividualCacheAccessor, Validation.Validator>();
@@ -132,8 +171,8 @@ public class MultipleCacheAccessor extends CacheAccessor {
     }
 
     Random rnd = new Random();
-    TerminationCondition.Condition termination = terminationCondition.createCondition(caches.toArray(
-        new CacheWrapper[caches.size()]));
+    TerminationCondition.Condition termination = terminationCondition.
+        createCondition(caches.toArray(new GenericCacheWrapper[caches.size()]));
 
     long start = now();
     do {
@@ -164,6 +203,11 @@ public class MultipleCacheAccessor extends CacheAccessor {
   @Override
   public CacheAccessor untilFilled() {
     return terminateOn(new FilledTerminationCondition());
+  }
+
+  @Override
+  public CacheAccessor iterate(final long nbIterations) {
+    return terminateOn(new IterationTerminationCondition(nbIterations));
   }
 
   @Override
@@ -218,6 +262,8 @@ public class MultipleCacheAccessor extends CacheAccessor {
     return this;
   }
 
+  // TODO : it should apply on the list of last accessors and not only last one -> it should apply to all methods that are related to a cache
+  // TODO e.g. : access(cache).doops(..).withWeight(..).untilFilled().andAccess(cache2).doops(..).withWeight(..).untilFilled()
   @Override
   public CacheAccessor withWeight(int i) {
     latestAccessor().withWeight(i);
@@ -238,6 +284,7 @@ public class MultipleCacheAccessor extends CacheAccessor {
     return this;
   }
 
+  // TODO : it should apply on the list of last accessors only
   @Override
   public CacheAccessor doOps(final CacheOperation... cacheOperations) {
     for (IndividualCacheAccessor individualCacheAccessor : accessors)

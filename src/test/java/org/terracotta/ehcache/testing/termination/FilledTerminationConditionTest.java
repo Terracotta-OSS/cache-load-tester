@@ -12,6 +12,8 @@ import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 
+import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
+
 
 public class FilledTerminationConditionTest {
   private CacheManager cacheManager;
@@ -39,7 +41,7 @@ public class FilledTerminationConditionTest {
     Cache cache1 = cacheManager.getCache("cache1");
     Cache cache2 = cacheManager.getCache("cache2");
 
-    CacheDriver cacheDriver = CacheLoader.load(cache1, cache2)
+    CacheDriver cacheDriver = CacheLoader.load(ehcache(cache1, cache2))
         .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(1000))
         .sequentially()
         .untilFilled();

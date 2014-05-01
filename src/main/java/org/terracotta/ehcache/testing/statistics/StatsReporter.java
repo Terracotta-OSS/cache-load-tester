@@ -4,6 +4,13 @@
  */
 package org.terracotta.ehcache.testing.statistics;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
+import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
+import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
+import org.terracotta.ehcache.testing.statistics.logger.StatsLogger;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,20 +19,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import net.sf.ehcache.Ehcache;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
-import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
-import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
-import org.terracotta.ehcache.testing.statistics.logger.StatsLogger;
-
 public class StatsReporter {
   private static Logger logger = LoggerFactory.getLogger(StatsReporter.class);
   private static final int reportPeriod = Integer.parseInt(System.getProperty("stats.reporter.interval","4"));
 
-  private final Map<String, CacheWrapper> cacheWrappers = new HashMap<String, CacheWrapper>();
+  private final Map<String, GenericCacheWrapper> cacheWrappers = new HashMap<String, GenericCacheWrapper>();
 
   private final AtomicReference<Thread> reportThread = new AtomicReference<Thread>();
   private final AtomicReference<Thread> memoryReportThread = new AtomicReference<Thread>();
@@ -94,7 +92,8 @@ public class StatsReporter {
    * @return this
    */
   public synchronized StatsReporter startReporting() {
-	logger.debug("Starting stats reporting ... thread #" + curr.incrementAndGet());
+    curr.incrementAndGet();
+    logger.debug("Starting stats reporting ... thread #{}", curr.get());
     if (reportThread.get() != null) {
       return this;
     }
@@ -127,7 +126,7 @@ public class StatsReporter {
 
   /**
    * Stops reporter thread. Clears the list of registered cacheWrapper since
-   * new {@link CacheWrapper} is created for each driver
+   * new {@link GenericCacheWrapper} is created for each driver
    */
   public synchronized void stopReporting() {
 	int last = curr.decrementAndGet();
@@ -155,7 +154,7 @@ public class StatsReporter {
     memoryReportThread.set(null);
   }
 
-  public synchronized void register(Ehcache cache, CacheWrapper cacheWrapper) {
+  public synchronized void register(GenericCacheWrapper cacheWrapper) {
     String name = cacheWrapper.getName();
     logger.info(name + " registered for stats reporting.");
     cacheWrappers.put(name, cacheWrapper);
@@ -174,11 +173,11 @@ public class StatsReporter {
   }
 
   /**
-   * Reset stats for all {@link CacheWrapper}
+   * Reset stats for all {@link GenericCacheWrapper}
    */
   private synchronized void resetStats() {
 	node.reset();
-    for (CacheWrapper cache : cacheWrappers.values()) {
+    for (GenericCacheWrapper cache : cacheWrappers.values()) {
       cache.resetStats();
     }
   }
