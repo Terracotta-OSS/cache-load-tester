@@ -1,10 +1,9 @@
 package org.terracotta.ehcache.testing.statistics.logger;
 
-import java.util.Collection;
-
-import org.terracotta.ehcache.testing.cache.CacheWrapper;
 import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.statistics.StatsNode;
+
+import java.util.Collection;
 
 public interface StatsLogger {
 

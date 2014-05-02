@@ -21,20 +21,16 @@ CacheLoader example:
 --------------------
 The example below will load 3 caches (one, two, three), putting Elements with key is a String, value is a byte array[128]
 
-It will do 75% of put() and 25% of putIfAbsent()
+It will do 100% of put() (default setting)
 
-It will load the caches sequentially (the key will be incremented sequentially), until the caches are filled.
+It will load the caches concurrently with 4 threads sequentially (the keys will be incremented sequentially), putting 10000 Elements.
 It will enable the statistics and print them to the console.
-It will load the caches concurrently, using 4 Threads.
-
 ```
-CacheDriver load = CacheLoader.load(one, two, three)
-    .doOps(put(0.75), putIfAbsent(0.25))
-    .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
-    .sequentially()
-    .untilFilled().enableStatistics(true)
-    .addLogger(new ConsoleStatsLoggerImpl());
-ParallelDriver.inParallel(4, load).run();
+CacheDriver loader = CacheLoader
+  .load(ehcache(one, two, three))
+      .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+      .fillPartitioned(10000, 4)
+      .enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl());
 ```
   
 CacheAccessor example:

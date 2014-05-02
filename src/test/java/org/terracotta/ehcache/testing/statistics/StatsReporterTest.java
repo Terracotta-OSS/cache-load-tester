@@ -20,6 +20,7 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
@@ -33,18 +34,17 @@ import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
-
+import static com.jayway.awaitility.Awaitility.await;
 import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
 
 public class StatsReporterTest {
 
-  @Ignore
   @Test
-  public void testStatsReporterShutdown() {
+  public void testStatsReporterShutdown() throws Exception {
     CacheManager manager = new CacheManager(new Configuration()
         .name("testStatsReporterShutdown")
         .maxBytesLocalHeap(50, MemoryUnit.MEGABYTES)
@@ -54,16 +54,15 @@ public class StatsReporterTest {
       Ehcache cache1 = manager.addCacheIfAbsent("cache1");
       Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
-      CacheLoader loader = CacheLoader
+      CacheDriver loader = CacheLoader
           .load(ehcache(cache1, cache2))
               .using(StringGenerator.integers(),
                   ByteArrayGenerator.randomSize(300, 1200))
-              .enableStatistics(true).sequentially().iterate(10000)
-              .addLogger(new ConsoleStatsLoggerImpl());
+              .enableStatistics(true)
+              .addLogger(new ConsoleStatsLoggerImpl()).fillPartitioned(10000, 4);
 
-      CacheDriver driver = ParallelDriver.inParallel(8, loader);
-      driver.run();
-      StatsNode node = driver.getFinalStatsNode();
+      loader.run();
+      final StatsNode node = loader.getFinalStatsNode();
       Assert.assertEquals(10000, cache1.getSize());
       Assert.assertEquals(10000, cache2.getSize());
       Assert.assertEquals(160000, node.getOverallStats().getTxnCount());

@@ -23,20 +23,6 @@ import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 
 public class SimpleSingleCacheTest {
 
-  /*
-  public void stuffToDo() {
-    //Reporting
-    // - both on caches and cache-drivers
-    // run method returning a results object with stats
-    // exception handling in drivers
-    CacheDriver reporter = CacheReporter.reportOn(one, two).reportOn(accessing).every(10, TimeUnit.SECONDS).to(System.out);
-    CacheReporter.report(new MyInformationSource()).to(System.err);
-    
-    //In case of cluster - split parallel jobs across the active cluster
-    ParallelDriver.useCluster();
-  }
-  */
-
   @Test
   public void testSimpleLoad() {
     CacheManager manager = new CacheManager(new Configuration().name("testSimpleLoad")

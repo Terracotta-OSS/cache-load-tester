@@ -23,14 +23,14 @@ import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
 
 public class CacheAccessorTest {
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testIncorrectRatios() {
     CacheManager manager = new CacheManager(new Configuration().name("testSimpleAccessor")
         .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
         .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheAccessor accessor = CacheAccessor.access(ehcache(one))
+      CacheAccessor accessor = CacheAccessor.access(CACHES.ehcache(one))
           .doOps(putIfAbsent(0.20), put(0.20), get(0.20),
               update(0.20),
               remove(0.21), replaceElement(0.10), replace(0.11),
@@ -39,7 +39,9 @@ public class CacheAccessorTest {
           .atRandom(Distribution.GAUSSIAN, 0, 100000, 1000)
           .stopAfter(10, TimeUnit.SECONDS);
       accessor.run();
-      Assert.assertTrue(one.getSize() > 0);
+      Assert.fail();
+    } catch (RuntimeException e) {
+
     } finally {
       manager.shutdown();
     }

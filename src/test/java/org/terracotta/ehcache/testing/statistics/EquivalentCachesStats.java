@@ -20,7 +20,6 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.ParallelDriver;
@@ -40,11 +39,6 @@ import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
  */
 public class EquivalentCachesStats {
 
-  @Before
-  public void setUp() throws InterruptedException {
-    Thread.currentThread().join(30000);
-  }
-  
   /**
    * This is a test to measure performances on a count based cache between 2.4 and 2.5
    * This does not need to be included in the automatic jenkins jobs
@@ -69,8 +63,6 @@ public class EquivalentCachesStats {
 
   @Test
   public void testPerfsOnSizeBasedCacheUnclustered() {
-    waitForProfiler(false);
-
     Configuration configuration = new Configuration()
         .defaultCache(new CacheConfiguration().name("defaultCache")
             .maxBytesLocalHeap(350, MemoryUnit.MEGABYTES))
@@ -85,17 +77,6 @@ public class EquivalentCachesStats {
     System.out.println("unclustered=" + manager.getCache("unclusteredSizeBased").getStatistics().getLocalHeapSizeInBytes());
 
     manager.shutdown();
-  }
-
-  private void waitForProfiler(final boolean wait) {
-    if (wait) {
-      System.out.println("you can attach the profiler");
-      try {
-        Thread.currentThread().join(TimeUnit.SECONDS.toMillis(20));
-      } catch (InterruptedException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
-    }
   }
 
   private void accessAndStats(final Cache cache) {

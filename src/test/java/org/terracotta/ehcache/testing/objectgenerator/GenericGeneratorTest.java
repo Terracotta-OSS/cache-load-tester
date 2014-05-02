@@ -1,18 +1,18 @@
 package org.terracotta.ehcache.testing.objectgenerator;
 
-import java.io.Serializable;
-
-import junit.framework.Assert;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-
 import org.junit.Test;
 import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
+
+import java.io.Serializable;
+
+import junit.framework.Assert;
 
 /**
  * @author Aurelien Broszniowski

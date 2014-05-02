@@ -3,8 +3,9 @@ package org.terracotta.ehcache.testing.objectgenerator;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collection;
+
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Made by aurbrsz / 7/13/11 - 1:00
@@ -67,7 +68,13 @@ public class ByteArrayGeneratorTest {
   public void testGraph() {
     final ObjectGenerator generator = ByteArrayGenerator.objectGraph(50, 3);
     final Triple generate = (Triple)generator.generate(3);
+  }
 
-
+  @Test
+  public void testRandomByteGenerator() {
+    ObjectGenerator generator = ByteArrayGenerator.fixedSize(128);
+    byte[] result1 = (byte[])generator.generate(1L);
+    byte[] result2 = (byte[])generator.generate(1L);
+    assertArrayEquals(result1,result2);
   }
 }

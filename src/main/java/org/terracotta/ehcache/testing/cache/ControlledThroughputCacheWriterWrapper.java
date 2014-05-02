@@ -7,6 +7,8 @@ import net.sf.ehcache.constructs.nonstop.RejoinCacheException;
 
 /**
  * @author Vivek Verma
+ *
+ * TODO: write operation
  */
 public class ControlledThroughputCacheWriterWrapper extends CacheWrapperImpl {
   /**
