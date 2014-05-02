@@ -307,4 +307,47 @@ public class EhcacheOperation {
     };
   }
 
+  /**
+   * Put Elements in the cache with a limit on the max TPS
+   * @param ratio % of put operations
+   * @return null
+   */
+  public static CacheOperation putWithControlledThroughput(final double ratio) {
+
+    final int tpsThreshold = Integer.getInteger("tpsThreshold", -1);
+
+    return new CacheOperation(ratio) {
+      @Override
+      public Object exec(final GenericCacheWrapper cache, final long seed, final ObjectGenerator keyGenerator, final ObjectGenerator valueGenerator, final Validation.Validator validator) {
+        if (tpsThreshold != -1) {
+          while (cache.getWriteStats().getThroughput() > tpsThreshold) {
+            try {
+              Thread.sleep(10);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+        Element elementToPut = new Element(keyGenerator.generate(seed), valueGenerator.generate(seed));
+        long start = (cache.isStatisticsEnabled()) ? now() : 0;
+        try {
+          ((Ehcache)cache.getCache()).put(elementToPut);
+        } catch (RejoinCacheException rce) {
+          cache.getWriteStats().incrementTotalExceptionCount();
+        } catch (NonStopCacheException nsce) {
+          cache.getWriteStats().incrementTotalExceptionCount();
+        }
+        if (cache.isStatisticsEnabled()) {
+          long end = now();
+          cache.getWriteStats().add(end - start);
+        }
+        return null;
+      }
+
+      @Override
+      public OPERATIONS getName() {
+        return OPERATIONS.PUT_CONTROLLED_THROUGHPUT;
+      }
+    };
+  }
 }
