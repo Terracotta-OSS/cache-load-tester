@@ -1,16 +1,26 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing;
 
-import java.util.concurrent.TimeUnit;
-
-import junit.framework.Assert;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-
 import org.junit.Test;
-import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
@@ -22,6 +32,10 @@ import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.validator.Validation;
+
+import java.util.concurrent.TimeUnit;
+
+import junit.framework.Assert;
 
 import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 
@@ -74,7 +88,7 @@ public class ValidatingCacheTest {
               return new TestingObject(seed);
             }
           })
-          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(30, TimeUnit.SECONDS);
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(20, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -102,7 +116,7 @@ public class ValidatingCacheTest {
               return new TestingObject(seed);
             }
           })
-          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(30, TimeUnit.SECONDS);
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(20, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {

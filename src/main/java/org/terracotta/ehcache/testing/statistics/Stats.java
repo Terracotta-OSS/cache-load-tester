@@ -1,10 +1,25 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing.statistics;
-
-import java.text.NumberFormat;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.NumberFormat;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Stats {
 	private static final NumberFormat nf = NumberFormat.getInstance();
@@ -108,9 +123,8 @@ public class Stats {
 	public void add(long txLength) {
 	    if (endTime != null)
 	        throw new IllegalStateException("Stats has been finalized...!!");
-		if (txLength > Short.MAX_VALUE) {
-			log.warn("stat transaction length exceeds 32 secs, txLength = {}",
-					txLength);
+		if (txLength > 32000000000L) {    // 32 seconds in nanoseconds
+			log.warn("stat transaction length exceeds 32 secs, txLength = {}", txLength);
 		}
 		transactionsCount.incrementAndGet();
 		totalTxLatency.addAndGet(txLength);
