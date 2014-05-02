@@ -34,10 +34,8 @@ import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.jayway.awaitility.Awaitility.await;
 import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
 import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
 
@@ -62,10 +60,9 @@ public class StatsReporterTest {
               .addLogger(new ConsoleStatsLoggerImpl()).fillPartitioned(10000, 4);
 
       loader.run();
-      final StatsNode node = loader.getFinalStatsNode();
       Assert.assertEquals(10000, cache1.getSize());
       Assert.assertEquals(10000, cache2.getSize());
-      Assert.assertEquals(160000, node.getOverallStats().getTxnCount());
+      Assert.assertEquals(20000, loader.getFinalStatsNode().getOverallStats().getTxnCount());
     } finally {
       manager.shutdown();
     }
