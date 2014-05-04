@@ -17,6 +17,7 @@
 package org.terracotta.ehcache.testing.cache;
 
 import org.slf4j.Logger;
+import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.statistics.Stats;
 import org.terracotta.ehcache.testing.statistics.StatsReporter;
 
@@ -67,4 +68,13 @@ public abstract class GenericCacheWrapper {
   public boolean isStatisticsEnabled() {
     return statistics;
   }
+
+  abstract public String getDefaultLoaderOperationName();
+
+  abstract public String getDefaultAccessorOperationName();
+
+  abstract public CacheOperation getDefaultLoaderOperation(final double ratio);
+
+  abstract public CacheOperation getDefaultAccessorOperation(final double ratio);
+
 }

@@ -1,3 +1,18 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing.cache;
 
 import net.sf.ehcache.CacheManager;
@@ -11,11 +26,11 @@ import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
-import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.put;
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.putIfAbsent;
+import static org.terracotta.EhcacheOperation.put;
+import static org.terracotta.EhcacheOperation.putIfAbsent;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 public class CacheLoaderTest {
 

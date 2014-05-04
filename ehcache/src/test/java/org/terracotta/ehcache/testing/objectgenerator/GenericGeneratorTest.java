@@ -1,3 +1,18 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing.objectgenerator;
 
 import net.sf.ehcache.CacheManager;
@@ -6,13 +21,14 @@ import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
 import org.junit.Test;
-import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
 
 import java.io.Serializable;
 
 import junit.framework.Assert;
+
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 /**
  * @author Aurelien Broszniowski
@@ -27,7 +43,7 @@ public class GenericGeneratorTest {
     try {
       Ehcache cache = manager.addCacheIfAbsent("someCache");
       final int nbIterations = 100;
-      CacheDriver load = CacheLoader.load(CACHES.ehcache(cache))
+      CacheDriver load = CacheLoader.load(ehcache(cache))
           .using(StringGenerator.integers(),
               new ObjectGenerator() {
                 public Object generate(final long seed) {

@@ -1,17 +1,27 @@
+/*
+ *  Copyright Terracotta, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package org.terracotta.ehcache.testing.statistics;
-
-import java.io.File;
-import java.util.concurrent.TimeUnit;
 
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
-
 import org.junit.Assert;
 import org.junit.Test;
-import org.terracotta.ehcache.testing.cache.CACHES;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.driver.ParallelDriver;
@@ -22,7 +32,13 @@ import org.terracotta.ehcache.testing.statistics.logger.ConsoleStatsLoggerImpl;
 import org.terracotta.ehcache.testing.statistics.logger.CsvStatsLoggerImpl;
 import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.*;
+import java.io.File;
+import java.util.concurrent.TimeUnit;
+
+import static org.terracotta.EhcacheOperation.putIfAbsent;
+import static org.terracotta.EhcacheOperation.remove;
+import static org.terracotta.EhcacheOperation.update;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 public class SimpleAccessWithStatsTest {
 
@@ -35,14 +51,14 @@ public class SimpleAccessWithStatsTest {
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
     Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
-    CacheLoader loader = CacheLoader.load(CACHES.ehcache(cache1, cache2))
+    CacheLoader loader = CacheLoader.load(ehcache(cache1, cache2))
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
         .enableStatistics(true).sequentially()
         .addLogger(new CsvStatsLoggerImpl("target/logs-example-load.csv"))
         .untilFilled();
     ParallelDriver.inParallel(4, loader).run();
 
-    CacheAccessor access = CacheAccessor.access(CACHES.ehcache(cache1, cache2))
+    CacheAccessor access = CacheAccessor.access(ehcache(cache1, cache2))
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(300, 1200))
         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).doOps(update(0.02))
         .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
@@ -64,19 +80,19 @@ public class SimpleAccessWithStatsTest {
     Ehcache cache1 = manager.addCacheIfAbsent("cache1");
     Ehcache cache2 = manager.addCacheIfAbsent("cache2");
 
-    CacheLoader loader = CacheLoader.load(CACHES.ehcache(cache1, cache2))
-     .doOps(putIfAbsent(1.0))
+    CacheLoader loader = CacheLoader.load(ehcache(cache1, cache2))
+        .doOps(putIfAbsent(1.0))
         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
         .enableStatistics(true).sequentially()
         .addLogger(new ConsoleStatsLoggerImpl())
         .untilFilled();
     ParallelDriver.inParallel(4, loader).run();
 
-    CacheAccessor access = CacheAccessor.access(CACHES.ehcache(cache1, cache2))
-         .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
-         .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).doOps(update(0.2), remove(0.2), putIfAbsent(0.6))
-         .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
-         .addLogger(new ConsoleStatsLoggerImpl());
+    CacheAccessor access = CacheAccessor.access(ehcache(cache1, cache2))
+        .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
+        .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).doOps(update(0.2), remove(0.2), putIfAbsent(0.6))
+        .terminateOn(new TimedTerminationCondition(20, TimeUnit.SECONDS)).enableStatistics(true)
+        .addLogger(new ConsoleStatsLoggerImpl());
 
     ParallelDriver.inParallel(4, access).run();
 

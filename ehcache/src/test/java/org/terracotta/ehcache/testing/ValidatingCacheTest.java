@@ -37,16 +37,22 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.Assert;
 
-import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 public class ValidatingCacheTest {
 
   @Test(expected = AssertionError.class)
   public void testEmptyCacheValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEmptyCacheValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testEmptyCacheValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(10, TimeUnit.SECONDS);
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validate(Validation.Mode.STRICT)
+          .stopAfter(10, TimeUnit.SECONDS);
       SequentialDriver.inSequence(access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -56,11 +62,20 @@ public class ValidatingCacheTest {
 
   @Test
   public void testEqualsValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver load = CacheLoader.load(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).sequentially().untilFilled();
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(10, TimeUnit.SECONDS);
+      CacheDriver load = CacheLoader.load(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .sequentially()
+          .untilFilled();
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validate(Validation.Mode.STRICT)
+          .stopAfter(10, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -70,7 +85,9 @@ public class ValidatingCacheTest {
 
   @Test
   public void testEqualsObjectValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testEqualsObjectValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration().name("default")));
+    CacheManager manager = new CacheManager(new Configuration().name("testEqualsObjectValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration().name("default")));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver load = CacheLoader.load(ehcache(one)).using(StringGenerator.integers(),
@@ -81,14 +98,17 @@ public class ValidatingCacheTest {
             }
           })
           .sequentially().untilFilled();
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(),
-          new ObjectGenerator() {
-            @Override
-            public Object generate(final long seed) {
-              return new TestingObject(seed);
-            }
-          })
-          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(20, TimeUnit.SECONDS);
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(),
+              new ObjectGenerator() {
+                @Override
+                public Object generate(final long seed) {
+                  return new TestingObject(seed);
+                }
+              })
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validate(Validation.Mode.STRICT)
+          .stopAfter(20, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -98,7 +118,9 @@ public class ValidatingCacheTest {
 
   @Test(expected = AssertionError.class)
   public void testNotEqualsObjectValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testNotEqualsObjectValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testNotEqualsObjectValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       CacheDriver load = CacheLoader.load(ehcache(one)).using(StringGenerator.integers(),
@@ -109,14 +131,17 @@ public class ValidatingCacheTest {
             }
           })
           .sequentially().untilFilled();
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(),
-          new ObjectGenerator() {
-            @Override
-            public Object generate(final long seed) {
-              return new TestingObject(seed);
-            }
-          })
-          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(20, TimeUnit.SECONDS);
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(),
+              new ObjectGenerator() {
+                @Override
+                public Object generate(final long seed) {
+                  return new TestingObject(seed);
+                }
+              })
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validate(Validation.Mode.STRICT)
+          .stopAfter(20, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, access).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -126,11 +151,20 @@ public class ValidatingCacheTest {
 
   @Test
   public void testParallelEqualsValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testParallelEqualsValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testParallelEqualsValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver load = CacheLoader.load(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).sequentially().untilFilled();
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validate(Validation.Mode.STRICT).stopAfter(10, TimeUnit.SECONDS);
+      CacheDriver load = CacheLoader.load(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .sequentially()
+          .untilFilled();
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validate(Validation.Mode.STRICT)
+          .stopAfter(10, TimeUnit.SECONDS);
       SequentialDriver.inSequence(load, ParallelDriver.inParallel(4, access)).run();
       Assert.assertTrue(one.getSize() > 0);
     } finally {
@@ -140,10 +174,16 @@ public class ValidatingCacheTest {
 
   @Test
   public void testFailingValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testFailingValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testFailingValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validateUsing(new FailingValidation()).stopAfter(10, TimeUnit.SECONDS);
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validateUsing(new FailingValidation())
+          .stopAfter(10, TimeUnit.SECONDS);
       boolean passed = false;
       try {
         access.run();
@@ -160,10 +200,16 @@ public class ValidatingCacheTest {
 
   @Test
   public void testFailingParallelValidation() {
-    CacheManager manager = new CacheManager(new Configuration().name("testFailingParallelValidation").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES).defaultCache(new CacheConfiguration("default", 0)));
+    CacheManager manager = new CacheManager(new Configuration().name("testFailingParallelValidation")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+        .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
-      CacheDriver access = CacheAccessor.access(ehcache(one)).using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128)).atRandom(Distribution.GAUSSIAN, 0, 1000, 10).validateUsing(new FailingValidation()).stopAfter(10, TimeUnit.SECONDS);
+      CacheDriver access = CacheAccessor.access(ehcache(one))
+          .using(StringGenerator.integers(), ByteArrayGenerator.fixedSize(128))
+          .atRandom(Distribution.GAUSSIAN, 0, 1000, 10)
+          .validateUsing(new FailingValidation())
+          .stopAfter(10, TimeUnit.SECONDS);
       boolean passed = false;
       try {
         ParallelDriver.inParallel(4, access).run();
@@ -213,7 +259,7 @@ public class ValidatingCacheTest {
       if (!(obj instanceof TestingObject)) {
         return false;
       }
-      TestingObject o = (TestingObject) obj;
+      TestingObject o = (TestingObject)obj;
       return ((getLongNb() == o.getLongNb()) && getFloatNb() == o.getFloatNb()
               && getIntNb() == o.getIntNb() && getSomeStr().equalsIgnoreCase(o.getSomeStr()));
     }

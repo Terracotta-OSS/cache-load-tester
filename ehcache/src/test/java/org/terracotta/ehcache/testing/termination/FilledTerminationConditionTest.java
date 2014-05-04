@@ -27,7 +27,7 @@ import org.terracotta.ehcache.testing.driver.CacheLoader;
 import org.terracotta.ehcache.testing.objectgenerator.ByteArrayGenerator;
 import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 
-import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 
 public class FilledTerminationConditionTest {

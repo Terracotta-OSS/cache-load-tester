@@ -41,8 +41,6 @@ import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.put;
-
 /**
  * The CacheLoader is one of the two main classes of the cache loader API. Its responsibilities are to
  * - configure the cache warmup phase
@@ -171,7 +169,7 @@ public class CacheLoader implements CacheDriver {
 
   public void run() {
     double sumOfRatios = checkRatios();
-    calculatePutRatio(sumOfRatios);
+    calculateDefaultOpRatio(sumOfRatios);
 
     logger.info("-- CacheLoader loader percentage: {}", operations.toString());
 
@@ -214,24 +212,26 @@ public class CacheLoader implements CacheDriver {
   }
 
   /**
-   * The get operation is the default one for the CacheLoader
+   * Calculate the default operation ratio for the CacheLoader
    * so we need to check if it was added by the user, otherwise we add it ourselves.
-   * Its ratio will be 100% - the other ratios
+   * Its ratio will be (100% - the other ratios)
    *
-   * @param sumOfRatios the sum of ratios (all operations, put is not included yet because it was not defined)
+   * @param sumOfRatios the sum of ratios (all operations, default is not included yet because it was not defined)
    */
-  private void calculatePutRatio(final double sumOfRatios) {
-    boolean putIsDefined = false;
-    for (CacheOperation ratio : operations) {
-      if (ratio.getName() == CacheOperation.OPERATIONS.PUT) {
-        putIsDefined = true;
+  private void calculateDefaultOpRatio(final double sumOfRatios) {
+    boolean defaultOpIsDefined = false;
+
+    GenericCacheWrapper cacheWrapper = caches.iterator().hasNext() ? caches.iterator().next() : null;
+    String defaultLoaderOperationName = cacheWrapper!= null ? cacheWrapper.getDefaultLoaderOperationName() : "";
+
+    for (CacheOperation operation : operations) {
+      if (operation.getName().equals(defaultLoaderOperationName)) {
+        defaultOpIsDefined = true;
         break;
       }
     }
-    // @TODO : remove the dependency to an Ehcache operation. Actually if no op is defined, we might want
-    // to throw an exception instead
-    if (!putIsDefined) {
-      final CacheOperation operation = put(1.0 - sumOfRatios);
+    if (!defaultOpIsDefined && cacheWrapper != null) {
+      final CacheOperation operation = cacheWrapper.getDefaultLoaderOperation(1.0 - sumOfRatios);
       operations.add(operation);
     }
   }

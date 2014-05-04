@@ -23,10 +23,6 @@ public abstract class CacheOperation<T> {
 
   private Validation.Mode validationMode;
 
-  public enum OPERATIONS {
-    GET, UPDATE, REMOVE, REMOVE_ELEMENT, REPLACE, REPLACE_ELEMENT, PUT, PUT_IF_ABSENT, PUT_WITH_WRITER, PUT_CONTROLLED_THROUGHPUT;
-  }
-
   Double ratio;
 
   private CacheOperation() {
@@ -62,5 +58,5 @@ public abstract class CacheOperation<T> {
 
   public abstract T exec(final GenericCacheWrapper cacheWrapper, final long seed, final ObjectGenerator keyGenerator, final ObjectGenerator valueGenerator, final Validation.Validator validator);
 
-  public abstract OPERATIONS getName();
+  public abstract String getName();
 }

@@ -1,6 +1,6 @@
 package org.terracotta.ehcache.testing.driver;
 
-import net.sf.ehcache.Ehcache;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.get;
 
 /**
  * This is the implementation of the CacheAccessor to do operations on one Cache.
@@ -68,7 +67,7 @@ public class IndividualCacheAccessor extends CacheAccessor {
   @Override
   protected void init() {
     double sumOfRatios = checkRatios();
-    calculateGetRatio(sumOfRatios);
+    calculateDefaultOpRatio(sumOfRatios);
 
     for (Iterator<CacheOperation> iterator = operations.iterator(); iterator.hasNext(); ) {
       final CacheOperation operation = iterator.next();
@@ -79,24 +78,22 @@ public class IndividualCacheAccessor extends CacheAccessor {
   }
 
   /**
-   * The get operation is the default one for the CacheAccessor
+   * Calculate the default operation ratio for the CacheAccessor
    * so we need to check if it was added by the user, otherwise we add it ourselves.
-   * Its ratio will be 100% - the other ratios
+   * Its ratio will be (100% - the other ratios)
    *
    * @param sumOfRatios the sum of ratios (all operations, get is not included yet because it was not defined)
    */
-  private void calculateGetRatio(final double sumOfRatios) {
-    boolean getIsDefined = false;
-    for (CacheOperation ratio : operations) {
-      if (ratio.getName() == CacheOperation.OPERATIONS.GET) {
-        getIsDefined = true;
+  private void calculateDefaultOpRatio(final double sumOfRatios) {
+    boolean defaultOpIsDefined = false;
+    for (CacheOperation operation : operations) {
+      if (operation.getName().equals(cacheWrapper.getDefaultAccessorOperationName())) {
+        defaultOpIsDefined = true;
         break;
       }
     }
-    // @TODO : remove the dependency to an Ehcache operation. Actually if no op is defined, we might want
-    // to throw an exception instead
-    if (!getIsDefined) {
-      final CacheOperation operation = get(1.0 - sumOfRatios);
+    if (!defaultOpIsDefined) {
+      final CacheOperation operation = cacheWrapper.getDefaultAccessorOperation(1.0 - sumOfRatios);
       operations.add(operation);
     }
   }
@@ -254,7 +251,7 @@ public class IndividualCacheAccessor extends CacheAccessor {
       this.validationMode = validationMode;
       this.validation = validation;
     } else {
-      throw new IllegalStateException("Validation already chosen for cache "+ this.cacheWrapper.getName());
+      throw new IllegalStateException("Validation already chosen for cache " + this.cacheWrapper.getName());
     }
     return this;
   }

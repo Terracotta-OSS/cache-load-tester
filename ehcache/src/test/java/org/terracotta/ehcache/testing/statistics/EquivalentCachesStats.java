@@ -31,8 +31,8 @@ import org.terracotta.ehcache.testing.termination.TimedTerminationCondition;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
-import static org.terracotta.ehcache.testing.operation.EhcacheOperation.update;
+import static org.terracotta.EhcacheOperation.update;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 /**
  * Made by aurbrsz / 10/28/11 - 18:19
@@ -56,7 +56,8 @@ public class EquivalentCachesStats {
 
     accessAndStats(manager.getCache("unclusteredCountBased"));
 
-    System.out.println("unclustered=" + manager.getCache("unclusteredCountBased").getStatistics().getLocalHeapSizeInBytes());
+    System.out
+        .println("unclustered=" + manager.getCache("unclusteredCountBased").getStatistics().getLocalHeapSizeInBytes());
 
     manager.shutdown();
   }
@@ -74,7 +75,9 @@ public class EquivalentCachesStats {
 
     accessAndStats(manager.getCache("unclusteredSizeBased"));
 
-    System.out.println("unclustered=" + manager.getCache("unclusteredSizeBased").getStatistics().getLocalHeapSizeInBytes());
+    System.out.println("unclustered=" + manager.getCache("unclusteredSizeBased")
+        .getStatistics()
+        .getLocalHeapSizeInBytes());
 
     manager.shutdown();
   }

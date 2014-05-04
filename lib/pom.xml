@@ -10,21 +10,6 @@
     <version>1.1.0</version>
   </parent>
 
-  <artifactId>ehcache</artifactId>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lib</artifactId>
-      <version>${parent.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache</artifactId>
-      <version>${ehcache.version}</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
+  <artifactId>lib</artifactId>
 
 </project>

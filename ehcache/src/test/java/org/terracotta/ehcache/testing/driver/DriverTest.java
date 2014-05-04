@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.Assert;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.terracotta.ehcache.testing.cache.CACHES.ehcache;
+import static org.terracotta.EhcacheWrapper.ehcache;
 
 /**
  * @author Aurelien Broszniowski

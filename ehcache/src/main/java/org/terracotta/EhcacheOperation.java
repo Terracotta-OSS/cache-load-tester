@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.terracotta.ehcache.testing.operation;
+package org.terracotta;
 
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -21,9 +21,14 @@ import net.sf.ehcache.constructs.nonstop.NonStopCacheException;
 import net.sf.ehcache.constructs.nonstop.RejoinCacheException;
 import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
+import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.validator.Validation;
 
 public class EhcacheOperation {
+
+  public enum OPERATIONS {
+    GET, UPDATE, REMOVE, REMOVE_ELEMENT, REPLACE, REPLACE_ELEMENT, PUT, PUT_IF_ABSENT, PUT_WITH_WRITER, PUT_CONTROLLED_THROUGHPUT;
+  }
 
   public static CacheOperation get(final double ratio) {
     return new CacheOperation(ratio) {
@@ -65,8 +70,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.GET;
+      public String getName() {
+        return OPERATIONS.GET.name();
       }
     };
   }
@@ -94,8 +99,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.REMOVE;
+      public String getName() {
+        return OPERATIONS.REMOVE.name();
       }
     };
   }
@@ -123,8 +128,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.REMOVE_ELEMENT;
+      public String getName() {
+        return OPERATIONS.REMOVE_ELEMENT.name();
       }
     };
   }
@@ -153,8 +158,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.PUT_IF_ABSENT;
+      public String getName() {
+        return OPERATIONS.PUT_IF_ABSENT.name();
       }
     };
   }
@@ -182,8 +187,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.PUT;
+      public String getName() {
+        return OPERATIONS.PUT.name();
       }
     };
   }
@@ -211,8 +216,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.PUT_WITH_WRITER;
+      public String getName() {
+        return OPERATIONS.PUT_WITH_WRITER.name();
       }
     };
   }
@@ -242,8 +247,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.REPLACE_ELEMENT;
+      public String getName() {
+        return OPERATIONS.REPLACE_ELEMENT.name();
       }
     };
   }
@@ -272,8 +277,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.REPLACE;
+      public String getName() {
+        return OPERATIONS.REPLACE.name();
       }
     };
   }
@@ -301,14 +306,15 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.UPDATE;
+      public String getName() {
+        return OPERATIONS.UPDATE.name();
       }
     };
   }
 
   /**
    * Put Elements in the cache with a limit on the max TPS
+   *
    * @param ratio % of put operations
    * @return null
    */
@@ -345,8 +351,8 @@ public class EhcacheOperation {
       }
 
       @Override
-      public OPERATIONS getName() {
-        return OPERATIONS.PUT_CONTROLLED_THROUGHPUT;
+      public String getName() {
+        return OPERATIONS.PUT_CONTROLLED_THROUGHPUT.name();
       }
     };
   }
