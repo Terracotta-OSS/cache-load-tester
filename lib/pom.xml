@@ -7,9 +7,9 @@
   <parent>
     <artifactId>cache-load-tester</artifactId>
     <groupId>org.terracotta</groupId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
   </parent>
 
-  <artifactId>lib</artifactId>
+  <artifactId>cache-load-tester-lib</artifactId>
 
 </project>

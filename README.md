@@ -17,6 +17,9 @@ Both have statistics support, you can enable stats and get various info (TPS, ca
 This is a DSL API, aka fluent interface (see http://en.wikipedia.org/wiki/Fluent_interface#Java)
 So your IDE autocompletion will help you a lot to know about the various options.
 
+The cache loader api is extensible. Currently it supports:
+ - Ehcache : http://www.ehcache.org/
+
 CacheLoader example:
 --------------------
 The example below will load 3 caches (one, two, three), putting Elements with key is a String, value is a byte array[128]
@@ -43,26 +46,39 @@ it will stop after 180 seconds.
 And stats are enabled. And again we use 4 Threads to access the caches concurrently.
 
 ```
-CacheAccessor access = CacheAccessor.access(one, two)
-    .get(0.75).remove(0.10).update(0.10).putIfAbsent(0.05)
+CacheAccessor access = CacheAccessor.access(ehcache(one, two))
+    .doOps(get(0.75), remove(0.10), update(0.10), putIfAbsent(0.05))
     .using(StringGenerator.integers(), ByteArrayGenerator.randomSize(800, 1200))
     .atRandom(Distribution.GAUSSIAN, 0, 10000, 1000).updateRatio(0.2).removeRatio(0.2)
-    .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS)).enableStatistics(true)
-    .addLogger(new ConsoleStatsLoggerImpl());
+    .terminateOn(new TimedTerminationCondition(180, TimeUnit.SECONDS))
+    .enableStatistics(true).addLogger(new ConsoleStatsLoggerImpl());
 ParallelDriver.inParallel(4, access).run();
 ```
 
 Version
 ----
-1.1.0
+1.2.0
 
 Maven dependency
 ----------------
 
+To use the cache load tester API, you need at least two jars, the cache-load-tester-lib which is the main jar, and one of the caches support jar, cache-load-tester-xxxxx.
+e.g. cache-load-tester-ehcache for Ehcache.
+
 ```
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>cache-load-tester</artifactId>
-      <version>1.1.0</version>
-    </dependency>
+<dependency>
+  <groupId>org.terracotta</groupId>
+  <artifactId>cache-load-tester-lib</artifactId>
+  <version>1.2.0</version>
+</dependency>
+```
+
+Then you add the dependency for the cache solution you want to test, e.g. for Ehcache
+
+```
+<dependency>
+  <groupId>org.terracotta</groupId>
+  <artifactId>cache-load-tester-ehcache</artifactId>
+  <version>1.2.0</version>
+</dependency>
 ```
