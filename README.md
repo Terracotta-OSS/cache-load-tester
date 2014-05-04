@@ -54,7 +54,7 @@ ParallelDriver.inParallel(4, access).run();
 
 Version
 ----
-1.1.0
+1.3.0-SNAPSHOT
 
 Maven dependency
 ----------------
@@ -63,6 +63,6 @@ Maven dependency
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>cache-load-tester</artifactId>
-      <version>1.1.0</version>
+      <version>1.3.0-SNAPSHOT</version>
     </dependency>
 ```
