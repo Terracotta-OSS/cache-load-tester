@@ -20,6 +20,7 @@
   <modules>
     <module>lib</module>
     <module>ehcache</module>
+    <module>memcached</module>
   </modules>
 
 

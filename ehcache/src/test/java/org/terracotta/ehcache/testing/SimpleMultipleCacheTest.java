@@ -20,6 +20,7 @@ import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.MemoryUnit;
+import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.ehcache.testing.driver.CacheAccessor;
 import org.terracotta.ehcache.testing.driver.CacheDriver;
@@ -29,8 +30,6 @@ import org.terracotta.ehcache.testing.objectgenerator.StringGenerator;
 import org.terracotta.ehcache.testing.sequencegenerator.Distribution;
 
 import java.util.concurrent.TimeUnit;
-
-import junit.framework.Assert;
 
 import static org.terracotta.EhcacheWrapper.ehcache;
 
@@ -44,7 +43,7 @@ public class SimpleMultipleCacheTest {
   public void testSimpleLoad() {
     CacheManager manager =
         new CacheManager(new Configuration().name("testSimpleLoad").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
-        .defaultCache(new CacheConfiguration("default", 0)));
+            .defaultCache(new CacheConfiguration("default", 0)));
     try {
       Ehcache one = manager.addCacheIfAbsent("one");
       Ehcache two = manager.addCacheIfAbsent("two");
@@ -91,7 +90,8 @@ public class SimpleMultipleCacheTest {
 
   @Test
   public void testSimpleAccessorArray() {
-    CacheManager manager = new CacheManager(new Configuration().name("testSimpleAccessorArray").maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
+    CacheManager manager = new CacheManager(new Configuration().name("testSimpleAccessorArray")
+        .maxBytesLocalHeap(16, MemoryUnit.MEGABYTES)
         .defaultCache(new CacheConfiguration("default", 0)));
 
     try {

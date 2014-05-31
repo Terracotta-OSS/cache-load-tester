@@ -24,6 +24,12 @@ import org.terracotta.ehcache.testing.objectgenerator.ObjectGenerator;
 import org.terracotta.ehcache.testing.operation.CacheOperation;
 import org.terracotta.ehcache.testing.validator.Validation;
 
+/**
+ * Defines a number of Ehcache operations to be used for testing
+ *
+ * @author Aurelien Broszniowski
+ */
+
 public class EhcacheOperation {
 
   public enum OPERATIONS {
@@ -87,9 +93,9 @@ public class EhcacheOperation {
         try {
           removed = ((Ehcache)cache.getCache()).remove(key);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getRemoveStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getRemoveStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -116,9 +122,9 @@ public class EhcacheOperation {
         try {
           removed = ((Ehcache)cache.getCache()).removeElement(elementToRemove);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getRemoveStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getRemoveStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -146,9 +152,9 @@ public class EhcacheOperation {
         try {
           element = ((Ehcache)cache.getCache()).putIfAbsent(elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -175,9 +181,9 @@ public class EhcacheOperation {
         try {
           ((Ehcache)cache.getCache()).put(elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -204,9 +210,9 @@ public class EhcacheOperation {
         try {
           ((Ehcache)cache.getCache()).putWithWriter(elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -235,9 +241,9 @@ public class EhcacheOperation {
         try {
           replaced = ((Ehcache)cache.getCache()).replace(oldElementToTestAgainst, elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -265,9 +271,9 @@ public class EhcacheOperation {
         try {
           oldReplacedElement = ((Ehcache)cache.getCache()).replace(elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();
@@ -294,9 +300,9 @@ public class EhcacheOperation {
         try {
           ((Ehcache)cache.getCache()).put(elementToPut);
         } catch (NonStopCacheException nsce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         } catch (RejoinCacheException rce) {
-          cache.getReadStats().incrementTotalExceptionCount();
+          cache.getWriteStats().incrementTotalExceptionCount();
         }
         if (cache.isStatisticsEnabled()) {
           long end = now();

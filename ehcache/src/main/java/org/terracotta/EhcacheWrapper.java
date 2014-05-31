@@ -24,6 +24,7 @@ import org.terracotta.ehcache.testing.cache.GenericCacheWrapper;
 import org.terracotta.ehcache.testing.operation.CacheOperation;
 
 /**
+ * Ehcache class to wrap Ehcache operations for the load tester lib module
  * @author Aurelien Broszniowski
  */
 
